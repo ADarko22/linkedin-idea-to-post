@@ -15,3 +15,59 @@ linkedin-idea-to-post = "linkedin_idea_to_post:main"
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+######################################################################
+# mypy:  static type checking
+[tool.mypy]
+python_version = 3.12
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+# Per-module overrides for third-party libraries or legacy code
+[[tool.mypy.overrides]]
+module = "legacy_module.*"
+ignore_errors = true
+
+######################################################################
+# ruff: linter and formatter
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# 1. Choose which rule categories to enable
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes (basic syntax, unused imports/variables)
+    "I",   # isort (import sorting)
+    "B",   # flake8-bugbear (common bugs/design-flaws)
+    "C4",  # flake8-comprehensions (better list/dict/set comprehensions)
+    "UP",  # pyupgrade (upgrades syntax to modern Python versions)
+]
+
+# 2. Specifically ignore rules you don't want flagged
+ignore = [
+    "E501", # Ignore line-length violations (let the formatter handle it)
+]
+
+# 3. Allow fixable rules to be auto-fixed on save/run
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+# Configure the code formatter style (matches Black by default)
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
