@@ -7,7 +7,9 @@ authors = [
     { name = "ADarko22", email = "a.elessar22@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic>=2.14.3",
+]
 
 [project.scripts]
 linkedin-idea-to-post = "linkedin_idea_to_post:main"
@@ -71,3 +73,36 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+######################################################################
+# pytest: testing framework
+[tool.pytest.ini_options]
+# 1. Set minimum required pytest version
+minversion = "9.2.0"
+
+# 2. Define default command line arguments
+addopts = [
+    "--import-mode=importlib", # Highly recommended for modern layouts
+    "--strict-markers",        # Errors out if you use an unregistered marker
+    "--strict-config",         # Errors out if a config option is invalid
+    "-ra",                     # Show summary for all except passed tests
+    "-v",                      # Verbose output
+]
+
+# 3. Specify directories where pytest should look for tests
+testpaths = [
+    "tests",
+]
+
+# 4. Filter or ignore specific warning patterns
+filterwarnings = [
+    "error",                           # Turn all warnings into errors (strict mode)
+    "ignore::DeprecationWarning",      # Ignore specific warnings if needed
+    "ignore:.*unclosed.*:UserWarning", # Ignore via regex match
+]
+
+# 5. Register custom test markers to prevent typos
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
