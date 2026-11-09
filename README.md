@@ -1,4 +1,4 @@
-# linkedin-idea-to-post 
+# linkedin-idea-to-post
 
 An autonomous multi-agent system powered by **CrewAI** and **Google Gemini** that takes a raw, unfiltered thought and
 shapes it into a structured, highly engaging LinkedIn post contextualized with modern marketplace trends.
@@ -35,4 +35,8 @@ The project orchestrates a sequential workflow between two specialized AI agents
 6. **Run the Application**: Use the following command to start the application.
    ```bash
    uv run linkedin-idea-to-post
+   ```
+7. **Install a pre-commit hook**: This will ensure that your code is linted and formatted before each commit (from cli).
+   ```bash
+   uv run pre-commit install
    ```
