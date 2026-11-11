@@ -1,5 +1,4 @@
 import csv
-import unicodedata
 from enum import StrEnum
 
 from linkedin_idea_to_post.linkedin.model import (
@@ -70,21 +69,16 @@ def parse_row(row_num: int, row: dict) -> RawPost:
     """
     Parses a single row of the CSV file, by returning a RawPost object or raising a ParsingFailure exception.
     It verifies and reports any missing fields in the row.
-    It performs NFKC (Normalization Form Compatibility Composition) on the 'ShareCommentary' field,
-    to clean up the look-alike UNICODE formatting.
     """
     parsing_error_codes = verify_row(row)
     if len(parsing_error_codes) > 0:
         raise build_parsing_failure(row_num, parsing_error_codes)
     else:
-        normalized_share_commentary = unicodedata.normalize(
-            "NFKD", row[CsvPostHeader.SHARE_COMMENTARY.value]
-        )
         return RawPost(
             row=row_num,
             date=row[CsvPostHeader.DATE.value],
             share_link=row[CsvPostHeader.SHARE_LINK.value],
-            share_commentary=normalized_share_commentary,
+            share_commentary=row[CsvPostHeader.SHARE_COMMENTARY.value],
         )
 
 

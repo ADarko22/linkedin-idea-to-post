@@ -147,10 +147,9 @@ def test_parsing_csv_post_with_data(create_csv_post_file) -> None:
 
     expected_raw_post = RawPost(
         row=1,
-        date="2026-11-04 21:24:04",
-        share_link="https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A7523857626154266624",
-        share_commentary="""Every system is built for a purpose; every action we take has both intended and unintended consequences.\n         #WorkCulture #ThePhoenixProject #DevOps #SoftwareEngineering\n         Content with strange characters: 📖 https://lnkd.in/eDJSJv8y\n        "" 1. Complexity: too many possible states.""\n        "" 2. Conformity: forced to fit ""non-logical"" realities."""
-        "",
+        date=mock_rows[1][0],
+        share_link=mock_rows[1][1],
+        share_commentary=mock_rows[1][2],
     )
     assert result.raw_posts == [expected_raw_post]
     assert result.parsing_errors == []

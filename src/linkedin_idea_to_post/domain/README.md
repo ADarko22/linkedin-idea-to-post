@@ -15,9 +15,3 @@ It includes attributes such as:
 - **Metadata**: Additional information associated with the post.
 
 All timestamps use UTC to ensure consistency across different time zones.
-
-### 2. [post_text.py](post_text.py)
-
-Contains pure functions for extracting text from the textual content of a LinkedIn post.
-
-These functions are designed to be reusable across different parts of the application.

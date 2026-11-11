@@ -10,13 +10,14 @@ from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 def test_post_survives_a_json_round_trip(sample_post: Post) -> None:
     data = sample_post.model_dump(mode="json")
     assert data["origin"] == "HUMAN"
-    assert data["status"] == "DRAFT"
+    assert data["status"] == "PUBLISHED"
     assert Post.model_validate(data) == sample_post
 
 
 def test_utc_time_conversion_success() -> None:
     post = Post(
         id=UUID(int=2),
+        url="https://www.linkedin.com/test_url",
         title="Test Post",
         body="This is a test post.",
         topics={"test", "post"},
@@ -42,6 +43,7 @@ def test_utc_time_conversion_rejects_naive() -> None:
     with pytest.raises(pydantic.ValidationError, match="timezone_aware"):
         Post(
             id=UUID(int=2),
+            url="https://www.linkedin.com/test_url",
             title="Test Post",
             body="This is a test post.",
             topics={"test", "post"},

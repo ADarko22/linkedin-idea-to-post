@@ -8,17 +8,39 @@ from uuid import UUID, uuid4
 import pytest
 
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.linkedin.model import RawPost
+
+
+@pytest.fixture
+def sample_raw_post() -> RawPost:
+    return RawPost(
+        row=1,
+        date="2023-01-01 00:00:00",
+        share_link="https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A6457",
+        share_commentary="""This is a test post.
+        #test #post""",
+    )
+
+
+@pytest.fixture
+def raw_post_factory(sample_raw_post: RawPost) -> Callable[..., RawPost]:
+    def make(**overrides: Any) -> RawPost:
+        return sample_raw_post.model_copy(update={**overrides})
+
+    return make
 
 
 @pytest.fixture
 def sample_post() -> Post:
     return Post(
-        id=UUID(int=1),
-        title="Test Post",
-        body="This is a test post.",
+        id=UUID("9266cfeb-93f8-5593-823a-f6b81f3f6d75"),
+        url="https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A6457",
+        title="This is a test post.",
+        body="""This is a test post.
+        #test #post""",
         topics={"test", "post"},
         origin=PostOrigin.HUMAN,
-        status=PostStatus.DRAFT,
+        status=PostStatus.PUBLISHED,
         created_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
         updated_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
     )

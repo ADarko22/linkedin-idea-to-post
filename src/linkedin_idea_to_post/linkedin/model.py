@@ -31,7 +31,7 @@ class FieldError(BaseModel):
 
 class CsvMappingError(BaseModel):
     raw_post: "RawPost"
-    errors: list[FieldError]
+    errors: list[FieldError] = []
 
 
 # Control Flow Exceptions
