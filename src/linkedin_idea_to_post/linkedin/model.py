@@ -34,7 +34,18 @@ class CsvMappingError(BaseModel):
     errors: list[FieldError]
 
 
-# 3. Data & Result Models (Pydantic for easy JSON serialization)
+# Control Flow Exceptions
+class ParsingFailure(Exception):
+    def __init__(self, errors: list[CsvParsingError]):
+        self.errors = errors
+
+
+class MappingFailure(Exception):
+    def __init__(self, errors: list[FieldError]):
+        self.errors = errors
+
+
+# Data & Result Models (Pydantic for easy JSON serialization)
 class RawPost(BaseModel):
     row: int
     date: str

@@ -1,3 +1,7 @@
+import re
+
+import pytest
+
 from linkedin_idea_to_post.linkedin.csv_parser import (
     CsvParser,
     parse_row,
@@ -5,24 +9,28 @@ from linkedin_idea_to_post.linkedin.csv_parser import (
     verify_row,
 )
 from linkedin_idea_to_post.linkedin.model import (
-    CsvParserResult,
     CsvParsingError,
     ParsingErrorCode,
+    ParsingFailure,
     RawPost,
 )
 
 
 def test_verify_valid_headers(create_csv_post_file) -> None:
-    parsing_error = verify_headers({"Date", "ShareLink", "ShareCommentary", "xDate"})
-    assert parsing_error is None
+    # No exception raised
+    verify_headers({"Date", "ShareLink", "ShareCommentary", "xDate"})
 
 
 def test_verify_invalid_headers(create_csv_post_file) -> None:
-    parsing_error = verify_headers({"xDate", "ShareLink", "ShareCommentary"})
-    assert parsing_error is not None
-    assert parsing_error.row == 0
-    assert parsing_error.code == ParsingErrorCode.INVALID_HEADER
-    assert parsing_error.message == "Missing headers: ['Date']."
+    expected_parsing_error = CsvParsingError(
+        row=0,
+        code=ParsingErrorCode.INVALID_HEADER,
+        message="Missing headers: ['Date'].",
+    )
+    expected_failure = ParsingFailure([expected_parsing_error])
+
+    with pytest.raises(ParsingFailure, match=re.escape(str(expected_failure))):
+        verify_headers({"xDate", "ShareLink", "ShareCommentary"})
 
 
 def test_verify_invalid_row(create_csv_post_file) -> None:
@@ -47,26 +55,20 @@ def test_parse_valid_row():
     expected_raw_post = RawPost(
         row=1, date="xxx", share_link="xxx", share_commentary="xxx"
     )
-
     dict_row = {"Date": "xxx", "ShareLink": "xxx", "ShareCommentary": "xxx"}
-    result = CsvParserResult()
-    parse_row(1, dict_row, csv_parser_result=result)
-    assert result.raw_posts == [expected_raw_post]
-    assert result.parsing_errors == []
+    raw_post = parse_row(1, dict_row)
+    assert raw_post == expected_raw_post
 
 
 def test_parse_invalid_row():
-    expected_parsing_errors = [
-        CsvParsingError(
-            row=1, code=ParsingErrorCode.EMPTY_FIELD, message="'ShareLink' is empty."
-        )
-    ]
+    expected_parsing_error = CsvParsingError(
+        row=1, code=ParsingErrorCode.EMPTY_FIELD, message="'ShareLink' is empty."
+    )
+    expected_failure = ParsingFailure([expected_parsing_error])
 
-    dict_row = {"Date": "xxx", "ShareLink": "", "ShareCommentary": "xxx"}
-    result = CsvParserResult()
-    parse_row(1, dict_row, csv_parser_result=result)
-    assert result.raw_posts == []
-    assert result.parsing_errors == expected_parsing_errors
+    with pytest.raises(ParsingFailure, match=re.escape(str(expected_failure))):
+        dict_row = {"Date": "xxx", "ShareLink": "", "ShareCommentary": "xxx"}
+        parse_row(1, dict_row)
 
 
 def test_parsing_csv_post_with_missing_headers(create_csv_post_file) -> None:

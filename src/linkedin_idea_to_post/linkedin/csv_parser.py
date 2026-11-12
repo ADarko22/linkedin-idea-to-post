@@ -6,6 +6,7 @@ from linkedin_idea_to_post.linkedin.model import (
     CsvParserResult,
     CsvParsingError,
     ParsingErrorCode,
+    ParsingFailure,
     RawPost,
 )
 
@@ -21,9 +22,9 @@ class CsvPostHeader(StrEnum):
         return {member.value: member for member in cls}
 
 
-def verify_headers(headers: set[str]) -> CsvParsingError | None:
+def verify_headers(headers: set[str]):
     """
-    Verifies that the headers are present in the CSV file.
+    Verifies that the headers are present in the CSV file. Raises a ParsingFailure exception if not.
     """
     missing_headers = []
     for header in CsvPostHeader.value_to_enum_dict().keys():
@@ -32,51 +33,59 @@ def verify_headers(headers: set[str]) -> CsvParsingError | None:
 
     if len(missing_headers) > 0:
         error_message = f"Missing headers: {missing_headers}."
-        return CsvParsingError(
+        parsing_error = CsvParsingError(
             row=0, code=ParsingErrorCode.INVALID_HEADER, message=error_message
         )
-
-    return None
+        raise ParsingFailure([parsing_error])
 
 
 def verify_row(row: dict) -> dict[str, ParsingErrorCode]:
     """
-    Verifies that the row is in the expected format. Returns the missing fields.
+    Verifies that the row is in the expected format, and returns the error code by field found.
     """
-    parsing_errors = {}
+    parsing_error_codes = {}
     for field in CsvPostHeader.value_to_enum_dict().keys():
         if row[field] == "":
-            parsing_errors.update({field: ParsingErrorCode.EMPTY_FIELD})
-    return parsing_errors
+            parsing_error_codes.update({field: ParsingErrorCode.EMPTY_FIELD})
+    return parsing_error_codes
 
 
-def parse_row(row_num: int, row: dict, csv_parser_result: CsvParserResult) -> None:
+def build_parsing_failure(
+    row_num: int, parsing_error_codes: dict[str, ParsingErrorCode]
+) -> ParsingFailure:
     """
-    Parses a single row of the CSV file, by updating (as side effect) the csv_parser_result.
+    Builds a ParsingFailure object from the parsing error codes.
+    """
+    parsing_errors = []
+    for field, parsing_error_code in parsing_error_codes.items():
+        error_message = f"'{field}' is empty."
+        parsing_error = CsvParsingError(
+            row=row_num, code=parsing_error_code, message=error_message
+        )
+        parsing_errors.append(parsing_error)
+    return ParsingFailure(parsing_errors)
+
+
+def parse_row(row_num: int, row: dict) -> RawPost:
+    """
+    Parses a single row of the CSV file, by returning a RawPost object or raising a ParsingFailure exception.
     It verifies and reports any missing fields in the row.
     It performs NFKC (Normalization Form Compatibility Composition) on the 'ShareCommentary' field,
-    to clean up the look-alike UNICODE formatting, before creating a RawPost object.
+    to clean up the look-alike UNICODE formatting.
     """
-    parsing_errors = verify_row(row)
-    if len(parsing_errors) > 0:
-        for field, parsing_error_code in parsing_errors.items():
-            error_message = f"'{field}' is empty."
-            parsing_error = CsvParsingError(
-                row=row_num, code=parsing_error_code, message=error_message
-            )
-            csv_parser_result.parsing_errors.append(parsing_error)
+    parsing_error_codes = verify_row(row)
+    if len(parsing_error_codes) > 0:
+        raise build_parsing_failure(row_num, parsing_error_codes)
     else:
         normalized_share_commentary = unicodedata.normalize(
             "NFKD", row[CsvPostHeader.SHARE_COMMENTARY.value]
         )
-
-        raw_post = RawPost(
+        return RawPost(
             row=row_num,
             date=row[CsvPostHeader.DATE.value],
             share_link=row[CsvPostHeader.SHARE_LINK.value],
             share_commentary=normalized_share_commentary,
         )
-        csv_parser_result.raw_posts.append(raw_post)
 
 
 class CsvParser:
@@ -93,17 +102,21 @@ class CsvParser:
             reader = csv.DictReader(csvfile)
 
             headers = set(reader.fieldnames) if reader.fieldnames else set()
-            parsing_header_error = verify_headers(headers)
-
-            if parsing_header_error is not None:
-                csv_parser_result.parsing_errors.append(parsing_header_error)
+            try:
+                verify_headers(headers)
+            except ParsingFailure as failure:
+                csv_parser_result.parsing_errors.extend(failure.errors)
                 return csv_parser_result
 
             rows = list(reader)
 
         for row_num in range(len(rows)):
             row = rows[row_num]
-            # passing row_num + 1 to account for the header
-            parse_row(row_num + 1, row, csv_parser_result)
+            try:
+                # passing row_num + 1 to account for the header
+                raw_post = parse_row(row_num + 1, row)
+                csv_parser_result.raw_posts.append(raw_post)
+            except ParsingFailure as failure:
+                csv_parser_result.parsing_errors.extend(failure.errors)
 
         return csv_parser_result
