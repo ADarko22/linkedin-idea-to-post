@@ -1,0 +1,4 @@
+######################################################################
+# application config
+[archive]
+db_path = "data/archive/db.sqlite"

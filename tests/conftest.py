@@ -36,8 +36,7 @@ def sample_post() -> Post:
         id=UUID("9266cfeb-93f8-5593-823a-f6b81f3f6d75"),
         url="https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A6457",
         title="This is a test post.",
-        body="""This is a test post.
-        #test #post""",
+        body="""This is a test post.\n#test #post""",
         topics={"test", "post"},
         origin=PostOrigin.HUMAN,
         status=PostStatus.PUBLISHED,

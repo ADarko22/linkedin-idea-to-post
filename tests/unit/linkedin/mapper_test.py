@@ -76,11 +76,31 @@ def test_extract_post_uuid_missing_url() -> None:
 ###############################################################################################################
 # Extract Sanitized body
 def test_extract_sanitized_body():
-    assert extract_sanitized_body(" 1. 𝘾𝙤𝙢𝙥𝙡𝙚𝙭𝙞𝙩𝙮") == " 1. Complexity"
+    assert extract_sanitized_body(" 1. 𝘾𝙤𝙢𝙥𝙡𝙚𝙭𝙞𝙩𝙮") == "1. Complexity"
     assert (
         extract_sanitized_body("📖 𝙪𝙣𝙞𝙣𝙩𝙚𝙣𝙙𝙚𝙙 𝙘𝙤𝙣𝙨𝙚𝙦𝙪𝙚𝙣𝙘𝙚𝙨")
         == "📖 unintended consequences"
     )
+
+    # Corner Case 1: Multi-layered wrapping quotes & CSV escaped quotes
+    assert extract_sanitized_body('"""Hello ""World""!"""') == 'Hello "World"!'
+
+    # Corner Case 2: Multi-line text with dangling leading/trailing quotes on internal split lines
+    multiline_input = (
+        '"""First line with quote"\n'
+        '""Second line with dangling start and end quote"\n'
+        '""Final line"""'
+    )
+    expected_multiline = (
+        "First line with quote\n"
+        "Second line with dangling start and end quote\n"
+        "Final line"
+    )
+    assert extract_sanitized_body(multiline_input) == expected_multiline
+
+    # Corner Case 3: Empty or whitespace-only inputs
+    assert extract_sanitized_body("") == ""
+    assert extract_sanitized_body("   ") == ""
 
 
 ###############################################################################################################
@@ -95,8 +115,8 @@ def test_extract_sanitized_body():
         ),
         (
             """Some potential capped at newline.
-            This is a continuation.
-            """,
+                This is a continuation.
+                """,
             "Some potential capped at newline.",
         ),
         (
@@ -121,9 +141,9 @@ def test_extract_title(raw_body: str, expected_title: str) -> None:
         ),
         (
             """
-        Some formatted text.
-        With some valid and invalid hashtags. #python.#coding #unit-test #unit_test
-        """,
+            Some formatted text.
+            With some valid and invalid hashtags. #python.#coding #unit-test #unit_test
+            """,
             {"python", "coding", "unit_test"},
         ),
         ("no hashtags", set()),

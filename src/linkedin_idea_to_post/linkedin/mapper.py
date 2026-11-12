@@ -45,10 +45,37 @@ def extract_post_uuid(share_link: str) -> uuid.UUID:
 # Extract Sanitized body
 def extract_sanitized_body(share_commentary: str) -> str:
     """
-    It performs NFKC (Normalization Form Compatibility Composition) on the 'ShareCommentary' field,
-    to clean up the look-alike UNICODE formatting.
+    Normalizes unicode, strips multi-layered LinkedIn CSV quote artifacts,
+    and cleans up redundant quotation marks and spacing.
     """
-    return unicodedata.normalize("NFKD", share_commentary)
+    if not share_commentary:
+        return ""
+
+    # 1. Normalize Unicode look-alikes (NFKD)
+    normalized = unicodedata.normalize("NFKD", share_commentary)
+
+    # 2. Clean up CSV double-quote escaping ("" -> ")
+    cleaned = normalized.replace('""', '"')
+
+    # 3. Strip leading/trailing whitespaces
+    cleaned = cleaned.strip()
+
+    # 4. Remove quotes from start and end of lines
+    lines = cleaned.splitlines()
+    processed_lines = []
+    for line in lines:
+        line = line.strip()
+
+        # Strip leading quotes
+        line = re.sub(r'^["“”]+', "", line).strip()
+
+        # Strip trailing quotes
+        line = re.sub(r'["“”]+$', "", line).strip()
+
+        if line:
+            processed_lines.append(line)
+
+    return "\n".join(processed_lines)
 
 
 ###############################################################################################################

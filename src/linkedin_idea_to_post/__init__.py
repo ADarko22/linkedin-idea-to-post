@@ -1,2 +1,5 @@
+from linkedin_idea_to_post.cli import cli
+
+
 def main() -> None:
-    print("Hello from linkedin-idea-to-post!")
+    cli()

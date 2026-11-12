@@ -32,7 +32,10 @@ The project orchestrates a sequential workflow between two specialized AI agents
    ```bash
    uv run pytest 
    ```
-6. **Run the Application**: Use the following command to start the application.
+6. **Run the CLI Application**: Use the following command to execute operations
+   - `show-config`
+   - `csv-import`
+   - `list-posts`
    ```bash
    uv run linkedin-idea-to-post
    ```
