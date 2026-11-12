@@ -77,8 +77,8 @@ def test_parsing_csv_post_with_missing_headers(create_csv_post_file) -> None:
     ]
     csv_file_path = create_csv_post_file(mock_rows)
 
-    parser = CsvParser(csv_file_path)
-    result = parser.parse_raw_posts()
+    parser = CsvParser()
+    result = parser.parse_raw_posts(csv_file_path)
 
     expected_parsing_error = CsvParsingError(
         row=0,
@@ -101,8 +101,8 @@ def test_parsing_csv_post_with_missing_data(create_csv_post_file) -> None:
     ]
     csv_file_path = create_csv_post_file(mock_rows)
 
-    parser = CsvParser(csv_file_path)
-    result = parser.parse_raw_posts()
+    parser = CsvParser()
+    result = parser.parse_raw_posts(csv_file_path)
 
     expected_parsing_errors = [
         CsvParsingError(
@@ -142,8 +142,8 @@ def test_parsing_csv_post_with_data(create_csv_post_file) -> None:
     ]
     csv_file_path = create_csv_post_file(mock_rows)
 
-    parser = CsvParser(csv_file_path)
-    result = parser.parse_raw_posts()
+    parser = CsvParser()
+    result = parser.parse_raw_posts(csv_file_path)
 
     expected_raw_post = RawPost(
         row=1,

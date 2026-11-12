@@ -6,15 +6,18 @@ from linkedin_idea_to_post.linkedin.mapper import (
     raw_post_to_post,
 )
 from linkedin_idea_to_post.linkedin.model import (
-    CsvImporterResult,
+    CsvImporterCommitResult,
+    CsvImporterPrepareResult,
     CsvMappingError,
     CsvParserResult,
     MappingFailure,
 )
 
 
-def process_parser_result(parser_result: CsvParserResult) -> CsvImporterResult:
-    importer_result = CsvImporterResult(parsing_errors=parser_result.parsing_errors)
+def process_parser_result(parser_result: CsvParserResult) -> CsvImporterPrepareResult:
+    importer_result = CsvImporterPrepareResult(
+        parsing_errors=parser_result.parsing_errors
+    )
 
     for raw_post in parser_result.raw_posts:
         try:
@@ -28,26 +31,32 @@ def process_parser_result(parser_result: CsvParserResult) -> CsvImporterResult:
 
 
 class CsvImporter:
-    def __init__(self, archive: SqliteArchive):
+    def __init__(self, parser: CsvParser, archive: SqliteArchive):
+        self.csv_parser = parser
         self.archive = archive
 
-    def prepare(self, file_path: Path) -> CsvImporterResult:
+    def prepare(self, file_path: Path) -> CsvImporterPrepareResult:
         """
         Prepares the import of the posts contained in the CSV file, by parsing the raw data,
         mapping it to Post objects, and collecting eventual errors.
         """
-        csv_parser = CsvParser(file_path)
-        parser_result = csv_parser.parse_raw_posts()
+        parser_result = self.csv_parser.parse_raw_posts(file_path)
         import_result = process_parser_result(parser_result)
         return import_result
 
-    def commit(self, import_result: CsvImporterResult) -> bool:
+    def commit(
+        self, import_result: CsvImporterPrepareResult
+    ) -> CsvImporterCommitResult:
         """
         Commits the import of the posts extracted from the CSV file, by persisting to the application archive.
         """
-        # todo model appropriate return: errors when import is not prepared, or errors have not been "resolved"
+        # todo model appropriate input
+
+        # todo add logic for possible CsvImporterCommitResult states
 
         for post in import_result.posts:
             self.archive.save(post)
-            # todo: improve with a save_all as a batch statement
-        return True
+            # todo: improve with a save_all
+
+        committed_count = len(import_result.posts)
+        return CsvImporterCommitResult(committed_count=committed_count)

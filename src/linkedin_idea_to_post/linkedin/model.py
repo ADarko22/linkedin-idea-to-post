@@ -62,7 +62,15 @@ class CsvParserResult(BaseModel):
         return bool(self.parsing_errors)
 
 
-class CsvImporterResult(BaseModel):
+class CsvImporterPrepareResult(BaseModel):
     posts: list[Post] = []
     parsing_errors: list[CsvParsingError] = []
     mapping_errors: list[CsvMappingError] = []
+
+
+class CsvImporterCommitResult(BaseModel):
+    committed_count: int = 0
+    # todo enrich with a status enum to cover:
+    #  if commit succeeds,
+    #  if there are unresolved error (i.e. user validating the CsvImporterPrepareResult)
+    #  if there is nothing new to commit (i.e. re-importing same file changes nothing)

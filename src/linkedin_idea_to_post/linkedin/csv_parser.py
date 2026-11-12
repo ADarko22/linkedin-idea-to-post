@@ -83,16 +83,13 @@ def parse_row(row_num: int, row: dict) -> RawPost:
 
 
 class CsvParser:
-    def __init__(self, file_path):
-        self.file_path = file_path
-
-    def parse_raw_posts(self) -> CsvParserResult:
+    def parse_raw_posts(self, file_path) -> CsvParserResult:
         """
         Parses the CSV file and returns a CSVPostParserResult object.
         """
         csv_parser_result = CsvParserResult()
 
-        with open(self.file_path, newline="", encoding="utf-8-sig") as csvfile:
+        with open(file_path, newline="", encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
 
             headers = set(reader.fieldnames) if reader.fieldnames else set()

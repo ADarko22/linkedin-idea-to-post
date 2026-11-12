@@ -30,6 +30,9 @@ DEFAULT_PAGE_SIZE = 50
 
 class SqliteArchive:
     def __init__(self, db_path: str | Path = ":memory:") -> None:
+        if db_path != ":memory:":
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
         self._conn = sqlite3.connect(db_path)
         self._conn.row_factory = sqlite3.Row
         # create the table here if it doesn't exist
@@ -40,6 +43,8 @@ class SqliteArchive:
             json_post = post.model_dump_json()
             parameters = (str(post.id), json_post)
             self._conn.execute(_UPSERT_POST, parameters)
+
+    # todo add a save_all as a batch statement
 
     def get(self, post_id: UUID) -> Post | None:
         with self._conn:
