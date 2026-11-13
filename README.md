@@ -52,6 +52,10 @@ Available commands:
 | `csv-import`  | Import LinkedIn posts from a CSV file. |
 | `list-posts`  | List archived posts.                   |
 
+Configuration options are defined in [config.py](src/linkedin_idea_to_post/config.py) and set via:
+- the [config.toml](config.toml) file
+- or corresponding env variables (e.g. `DRAFTING__WRITER="crewai"`)
+
 ### Pre-commit Hooks
 
 Install the pre-commit hook to automatically lint and format your code before each commit:
@@ -64,10 +68,11 @@ uv run pre-commit install
 
 The project aims to minimize external dependencies, using only the necessary modules and classes from each library.
 
-| Dependency                                                         | Usage                                                                                   | Scope / Reference                                          |
-|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|------------------------------------------------------------|
-| [Click](https://github.com/pallets/click)                          | Builds the CLI, including help pages, nested commands, and lazy loading of subcommands. | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py) |
-| [Pydantic](https://github.com/pydantic/pydantic)                   | Data modeling, validation, and JSON encoding/decoding.                                  | Used extensively throughout the application.               |
-| [Pydantic Settings](https://github.com/pydantic/pydantic-settings) | Manages application-specific configuration.                                             | [config.py](src/linkedin_idea_to_post/config.py)           |
-| [Rich](https://github.com/Textualize/rich)                         | Provides rich terminal output.                                                          | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py) |
-| [Unicode](https://github.com/garabik/unicode)                      | Normalizes text using Normalization Form Compatibility Composition (NFKD).              | [mapper.py](src/linkedin_idea_to_post/linkedin/mapper.py)  |
+| Dependency                                                         | Usage                                                                                                                                                    | Scope / Reference                                                        |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| [Click](https://github.com/pallets/click)                          | Builds the CLI, including help pages, nested commands, and lazy loading of subcommands.                                                                  | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py)               |
+| [Crewai](https://github.com/crewaiinc/crewai)                      | Builds an AI Workflow with agents for researching the web for trends and news regarding the idea and for drafting a post based on the generated context. | Used in the [ai_workflow](src/linkedin_idea_to_post/ai_workflow) module. |
+| [Pydantic](https://github.com/pydantic/pydantic)                   | Data modeling, validation, and JSON encoding/decoding.                                                                                                   | Used extensively throughout the application.                             |
+| [Pydantic Settings](https://github.com/pydantic/pydantic-settings) | Manages application-specific configuration.                                                                                                              | [config.py](src/linkedin_idea_to_post/config.py)                         |
+| [Rich](https://github.com/Textualize/rich)                         | Provides rich terminal output.                                                                                                                           | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py)               |
+|                                                                    |                                                                                                                                                          |                                                            

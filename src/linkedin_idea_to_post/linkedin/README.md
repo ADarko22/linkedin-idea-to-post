@@ -2,35 +2,69 @@
 
 This directory contains the LinkedIn-specific components and logic for importing LinkedIn posts into the application.
 
-## Content
+The main class is [CsvImporter](csv_importer.py) which imports the LinkedIn's `Shares.csv` file into the app's storage.
 
-### 1. [model.py](model.py)
+## Import Sequence Diagram
 
-Defines the data models used throughout the CSV parsing and importing process:
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Importer as CsvImporter
+    participant Parser as CsvParser
+    participant DB as SqliteArchive
+    Note over User, DB: 1. Prepare Import Operation
+    User ->> Importer: prepare("path/to/Shares.csv")
+    activate Importer
+    Importer ->> Parser: parse(file_path)
+    activate Parser
+    Parser -->> Importer: CsvParserResult
+    deactivate Parser
+    Note over Importer: Process raw post into validated posts
+    Importer -->> User: CsvImporterPrepareResult
+    deactivate Importer
+    Note over User, DB: 2. Commit Import Operation
+    User ->> Importer: commit(CsvImporterPrepareResult)
+    activate Importer
+    Importer ->> DB: save_all(posts)
+    activate DB
+    Note over DB: Store posts
+    deactivate DB
+    Importer -->> User: CsvImporterCommitResult
+    deactivate Importer
+```
 
-- **`RawPost`**: Represents a raw post extracted from LinkedIn's `Shares.csv` file, downloaded
-  from [LinkedIn's data export page](https://www.linkedin.com/mypreferences/d/download-my-data).
-- **`CsvParserResult`**: Represents the output of CSV parsing, containing:
-    - A list of `RawPost` objects.
-    - A list of `CsvParsingError` objects, representing structured parsing errors propagated to the user.
-- **`CsvImporterResult`**: Defines the contract across the importing boundary, containing:
-    - A list of `Post` objects from the [domain](../domain) module.
-    - A list of `CsvParsingError` objects.
-    - A list of `CsvMappingError` objects.
+## Main Components
 
-### 2. [csv_parser.py](csv_parser.py)
+### The [Data Model](model.py)
 
-Defines the `CsvParser` class, responsible for reading and parsing the `Shares.csv` file into a `CsvParserResult`.
+The data models used throughout CSV parsing and importing process.
 
-### 3. [csv_importer.py](csv_importer.py)
+| Model               | Description                                                                                                                                                                                                |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `RawPost`           | Represents a raw post extracted from LinkedIn's `Shares.csv` file, downloaded from [LinkedIn's data export page](https://www.linkedin.com/mypreferences/d/download-my-data).                               |
+| `CsvParserResult`   | Represents the CSV parsing result, containing a list of `RawPost` objects and a list of `CsvParsingError` objects (structured parsing errors propagated to the user).                                      |
+| `CsvImporterResult` | Defines the contract across the importing boundary, containing a list of `Post` objects from the [domain](../domain) module, a list of `CsvParsingError` objects, and a list of `CsvMappingError` objects. |
 
-Defines the `CsvImporter` class, responsible for importing LinkedIn posts into the application.
+### The [CsvImporter](csv_importer.py)
 
-The importer:
+The `CsvImporter` class, responsible for importing LinkedIn posts into the application's storage, as `Post` objects.
 
-1. Uses `CsvParser` to extract `RawPost` objects from the CSV file.
-2. Maps the extracted data into `Post` objects, from the [domain](../domain) module, using the [mapper.py](mapper.py)
-   pure functions.
-3. Produces a `CsvImporterResult` containing the imported posts and any parsing or mapping errors.
-4. Once the `CsvImporterResult` is validated, stores the `Post` objects in the application's persistence layer through
-   `SqliteArchive` from the [archive](../archive) module.
+| Method                                                                        | Description                                                                                                                             |
+|-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `prepare(file_path: Path) -> CsvImporterPrepareResult`                        | Parses the csv file with `CsvImporter` and maps the `RawPost` objects to `Post` objects, while collecting mapping errors along the way. |
+| `commit(prepare_result: CsvImporterPrepareResult) -> CsvImporterCommitResult` | Stores `Post` objects using `SqliteArchive` by ignoring eventual parsing and mappin errors which happened during prepare.               |
+
+#### The [CsvParser](csv_parser.py)
+
+The `CsvParser` class, responsible for reading and parsing the `Shares.csv` file into `RawPost` obejcts.
+
+| Method                                      | Description                                                                         |
+|---------------------------------------------|-------------------------------------------------------------------------------------|
+| `parse(file_path: Path) -> CsvParserResult` | Parses the csv file to `RawPost` objects and collects parsing errors along the way. |
+
+### External Boundaries
+
+1. [Post](../domain/post.py) (from domain): the core entity across the application, created by the import process and
+   stored in via the persistence layer.
+2. [SqliteArchive](../archive/sqlite_archive.py) (from archive): the application's persistence layer.

@@ -45,7 +45,7 @@ def test_prepare_and_commit_persists_valid_posts(
     stored_posts = in_memory_archive.get_all()
     assert len(stored_posts) == 0
 
-    importer.commit(import_result=result)
+    importer.commit(prepare_result=result)
 
     stored_posts = in_memory_archive.get_all()
     assert len(stored_posts) == 2

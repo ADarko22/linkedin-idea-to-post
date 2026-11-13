@@ -1,0 +1,13 @@
+write_post:
+  description: >
+    Write a comprehensive LinkedIn post about the core idea: {idea}.
+    Use the "voice" derived from the style and language adopted in the examples of posts below. 
+    Use these examples only for the writing style and not as context for the content.
+    
+    
+    POST STYLE EXAMPLES:
+    
+    {voice_examples}
+  expected_output: >
+    A well-structured markdown blog post of roughly 500 words.
+  agent: writer

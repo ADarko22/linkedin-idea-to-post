@@ -41,11 +41,11 @@ class CsvImporter:
         mapping it to Post objects, and collecting eventual errors.
         """
         parser_result = self.csv_parser.parse_raw_posts(file_path)
-        import_result = process_parser_result(parser_result)
-        return import_result
+        prepare_result = process_parser_result(parser_result)
+        return prepare_result
 
     def commit(
-        self, import_result: CsvImporterPrepareResult
+        self, prepare_result: CsvImporterPrepareResult
     ) -> CsvImporterCommitResult:
         """
         Commits the import of the posts extracted from the CSV file, by persisting to the application archive.
@@ -54,9 +54,9 @@ class CsvImporter:
 
         # todo add logic for possible CsvImporterCommitResult states
 
-        for post in import_result.posts:
+        for post in prepare_result.posts:
             self.archive.save(post)
             # todo: improve with a save_all
 
-        committed_count = len(import_result.posts)
+        committed_count = len(prepare_result.posts)
         return CsvImporterCommitResult(committed_count=committed_count)
