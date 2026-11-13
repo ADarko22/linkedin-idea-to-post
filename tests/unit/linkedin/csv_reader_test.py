@@ -24,8 +24,9 @@ def test_verify_valid_headers(create_csv_post_file) -> None:
 def test_verify_invalid_headers(create_csv_post_file) -> None:
     expected_parsing_error = CsvParsingError(
         row=0,
+        field="Date",
         code=ParsingErrorCode.INVALID_HEADER,
-        message="Missing headers: ['Date'].",
+        message="Missing header: 'Date'.",
     )
     expected_failure = ParsingFailure([expected_parsing_error])
 
@@ -62,7 +63,10 @@ def test_parse_valid_row():
 
 def test_parse_invalid_row():
     expected_parsing_error = CsvParsingError(
-        row=1, code=ParsingErrorCode.EMPTY_FIELD, message="'ShareLink' is empty."
+        row=1,
+        field="ShareLink",
+        code=ParsingErrorCode.EMPTY_FIELD,
+        message="'ShareLink' is empty.",
     )
     expected_failure = ParsingFailure([expected_parsing_error])
 
@@ -80,13 +84,22 @@ def test_parsing_csv_post_with_missing_headers(create_csv_post_file) -> None:
     parser = CsvParser()
     result = parser.parse_raw_posts(csv_file_path)
 
-    expected_parsing_error = CsvParsingError(
-        row=0,
-        code=ParsingErrorCode.INVALID_HEADER,
-        message="Missing headers: ['Date', 'ShareLink'].",
-    )
+    expected_parsing_errors = [
+        CsvParsingError(
+            row=0,
+            field="Date",
+            code=ParsingErrorCode.INVALID_HEADER,
+            message="Missing header: 'Date'.",
+        ),
+        CsvParsingError(
+            row=0,
+            field="ShareLink",
+            code=ParsingErrorCode.INVALID_HEADER,
+            message="Missing header: 'ShareLink'.",
+        ),
+    ]
     assert result.raw_posts == []
-    assert result.parsing_errors == [expected_parsing_error]
+    assert result.parsing_errors == expected_parsing_errors
 
 
 def test_parsing_csv_post_with_missing_data(create_csv_post_file) -> None:
@@ -106,18 +119,26 @@ def test_parsing_csv_post_with_missing_data(create_csv_post_file) -> None:
 
     expected_parsing_errors = [
         CsvParsingError(
-            row=1, code=ParsingErrorCode.EMPTY_FIELD, message="'Date' is empty."
-        ),
-        CsvParsingError(
-            row=1, code=ParsingErrorCode.EMPTY_FIELD, message="'ShareLink' is empty."
+            row=1,
+            field="Date",
+            code=ParsingErrorCode.EMPTY_FIELD,
+            message="'Date' is empty.",
         ),
         CsvParsingError(
             row=1,
+            field="ShareLink",
+            code=ParsingErrorCode.EMPTY_FIELD,
+            message="'ShareLink' is empty.",
+        ),
+        CsvParsingError(
+            row=1,
+            field="ShareCommentary",
             code=ParsingErrorCode.EMPTY_FIELD,
             message="'ShareCommentary' is empty.",
         ),
         CsvParsingError(
             row=2,
+            field="ShareCommentary",
             code=ParsingErrorCode.EMPTY_FIELD,
             message="'ShareCommentary' is empty.",
         ),

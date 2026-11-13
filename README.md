@@ -1,45 +1,73 @@
 # linkedin-idea-to-post
 
-An autonomous multi-agent system powered by **CrewAI** and **Google Gemini** that takes a raw, unfiltered thought and
-shapes it into a structured, highly engaging LinkedIn post contextualized with modern marketplace trends.
+An autonomous multi-agent system powered by **CrewAI** and **Google Gemini** that transforms raw, unfiltered thoughts
+into structured, engaging LinkedIn posts contextualized with modern marketplace trends.
 
 ## How It Works
 
-The project orchestrates a sequential workflow between two specialized AI agents:
+The application orchestrates a sequential workflow between two specialized AI agents:
 
-1. **Idea Explorer & Trend Contextualizer:** Evaluates your raw seed idea and maps it against current industry shifts,
-   finding the structural context that makes it urgent and relevant.
-2. **Expert LinkedIn Creator:** Synthesizes the expanded insight into a high-impact, mobile-optimized LinkedIn post
-   complete with a powerful hook, scannable spacing, and tailored formatting.
+| Agent                                    | Responsibility                                                                                                                                               |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Idea Explorer & Trend Contextualizer** | Evaluates the raw idea and maps it against current industry shifts, identifying the context that makes it relevant and timely.                               |
+| **Expert LinkedIn Creator**              | Transforms the expanded insight into a high-impact, mobile-optimized LinkedIn post, featuring a compelling hook, scannable spacing, and tailored formatting. |
 
 ## Development Guidelines
 
-1. **Install Python 3.12**: Ensure you have Python 3.12 installed on your system.
-2. **Install uv**: Python package and project manager.
-   ```bash
-   brew install uv
-   ```
-3. **Static Type Checking with `mypy`**: configured in [pyproject.toml](pyproject.toml).
-   ```bash
-   uv run mypy src
-   ```
-4. **Code Linting and Formatting with `ruff`:** configured in [pyproject.toml](pyproject.toml).
-    ```bash
-    uv run ruff check --fix
-    uv run ruff format
-    ```
-5. **Testing with `pytest`:** configured in [pyproject.toml](pyproject.toml).
-   ```bash
-   uv run pytest 
-   ```
-6. **Run the CLI Application**: Use the following command to execute operations
-   - `show-config`
-   - `csv-import`
-   - `list-posts`
-   ```bash
-   uv run linkedin-idea-to-post
-   ```
-7. **Install a pre-commit hook**: This will ensure that your code is linted and formatted before each commit (from cli).
-   ```bash
-   uv run pre-commit install
-   ```
+### Requirements
+
+| Requirement     | Description                                                 |
+|-----------------|-------------------------------------------------------------|
+| **Python 3.12** | Required Python version.                                    |
+| **uv**          | Python package and project manager. Install using Homebrew: |
+
+```bash
+brew install uv
+```
+
+### Development Commands
+
+The following tools are configured in [`pyproject.toml`](pyproject.toml).
+
+| Task                 | Tool     | Command                   |
+|----------------------|----------|---------------------------|
+| Static type checking | `mypy`   | `uv run mypy src`         |
+| Code linting         | `ruff`   | `uv run ruff check --fix` |
+| Code formatting      | `ruff`   | `uv run ruff format`      |
+| Testing              | `pytest` | `uv run pytest`           |
+
+### Running the Application
+
+Run the CLI application using:
+
+```bash
+uv run linkedin-idea-to-post
+```
+
+Available commands:
+
+| Command       | Description                            |
+|---------------|----------------------------------------|
+| `show-config` | Display application configuration.     |
+| `csv-import`  | Import LinkedIn posts from a CSV file. |
+| `list-posts`  | List archived posts.                   |
+
+### Pre-commit Hooks
+
+Install the pre-commit hook to automatically lint and format your code before each commit:
+
+```bash
+uv run pre-commit install
+```
+
+## Dependencies
+
+The project aims to minimize external dependencies, using only the necessary modules and classes from each library.
+
+| Dependency                                                         | Usage                                                                                   | Scope / Reference                                          |
+|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|------------------------------------------------------------|
+| [Click](https://github.com/pallets/click)                          | Builds the CLI, including help pages, nested commands, and lazy loading of subcommands. | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py) |
+| [Pydantic](https://github.com/pydantic/pydantic)                   | Data modeling, validation, and JSON encoding/decoding.                                  | Used extensively throughout the application.               |
+| [Pydantic Settings](https://github.com/pydantic/pydantic-settings) | Manages application-specific configuration.                                             | [config.py](src/linkedin_idea_to_post/config.py)           |
+| [Rich](https://github.com/Textualize/rich)                         | Provides rich terminal output.                                                          | CLI entrypoint: [cli.py](src/linkedin_idea_to_post/cli.py) |
+| [Unicode](https://github.com/garabik/unicode)                      | Normalizes text using Normalization Form Compatibility Composition (NFKD).              | [mapper.py](src/linkedin_idea_to_post/linkedin/mapper.py)  |

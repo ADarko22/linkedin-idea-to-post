@@ -31,11 +31,16 @@ def verify_headers(headers: set[str]):
             missing_headers.append(header)
 
     if len(missing_headers) > 0:
-        error_message = f"Missing headers: {missing_headers}."
-        parsing_error = CsvParsingError(
-            row=0, code=ParsingErrorCode.INVALID_HEADER, message=error_message
-        )
-        raise ParsingFailure([parsing_error])
+        parsing_errors = [
+            CsvParsingError(
+                row=0,
+                field=header,
+                code=ParsingErrorCode.INVALID_HEADER,
+                message=f"Missing header: '{header}'.",
+            )
+            for header in missing_headers
+        ]
+        raise ParsingFailure(parsing_errors)
 
 
 def verify_row(row: dict) -> dict[str, ParsingErrorCode]:
@@ -59,7 +64,7 @@ def build_parsing_failure(
     for field, parsing_error_code in parsing_error_codes.items():
         error_message = f"'{field}' is empty."
         parsing_error = CsvParsingError(
-            row=row_num, code=parsing_error_code, message=error_message
+            row=row_num, field=field, code=parsing_error_code, message=error_message
         )
         parsing_errors.append(parsing_error)
     return ParsingFailure(parsing_errors)

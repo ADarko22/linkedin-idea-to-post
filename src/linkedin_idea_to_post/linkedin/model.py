@@ -19,14 +19,30 @@ class MappingErrorCode(StrEnum):
 # Structured Error Models
 class CsvParsingError(BaseModel):
     row: int
+    field: str
     code: ParsingErrorCode
     message: str
+
+    def to_str_tuple(self) -> tuple[str, str, str, str]:
+        return (
+            str(self.row),
+            str(self.field),
+            str(self.code.value if hasattr(self.code, "value") else self.code),
+            self.message,
+        )
 
 
 class FieldError(BaseModel):
     field: str
     code: MappingErrorCode
     message: str
+
+    def to_str_tuple(self) -> tuple[str, str, str]:
+        return (
+            str(self.field),
+            str(self.code.value if hasattr(self.code, "value") else self.code),
+            self.message,
+        )
 
 
 class CsvMappingError(BaseModel):
