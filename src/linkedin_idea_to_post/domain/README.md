@@ -15,3 +15,8 @@ It includes attributes such as:
 - **Metadata**: Additional information associated with the post.
 
 All timestamps use UTC to ensure consistency across different time zones.
+
+### 2. [drafting.py](drafting.py)
+
+Defines the interface contract `DraftWriter`, which abstracts the logic tha transforms the user's idea into a draft.
+

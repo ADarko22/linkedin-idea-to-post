@@ -5,8 +5,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
 from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.config import AppConfig
+from linkedin_idea_to_post.drafting.draft_service import DraftService
 from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
 
@@ -39,6 +41,29 @@ def show_config() -> None:
             table.add_row(config_key, key, str(value))
 
     console.print(table)
+
+
+@cli.command("draft")
+@click.argument(
+    "idea",
+    type=str,
+    required=True,
+    help="The user's prompt.",
+)
+def draft(idea: str) -> None:
+    """Generates a post from the given idea and stores it in the database."""
+    config = AppConfig()
+    archive = SqliteArchive(db_path=config.archive.db_path)
+    writer = CrewaiDraftWriter()
+    draft_service = DraftService(writer=writer, archive=archive)
+    post = draft_service.draft(idea)
+
+    content = (
+        f"[dim]ID: {post.id} | Origin: {post.origin} | Status: {post.status}[/dim]\n"
+        f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n\n"
+        f"[bold yellow]{post.title}[/bold yellow]\n\n{post.body}"
+    )
+    console.print(Panel(content, title="Generated Post", border_style="cyan"))
 
 
 @cli.command("import-csv")
