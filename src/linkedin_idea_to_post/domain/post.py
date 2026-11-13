@@ -18,7 +18,7 @@ class PostOrigin(StrEnum):
 
 class Post(BaseModel):
     id: UUID
-    url: str
+    url: str | None
     title: str
     body: str
     topics: set[str]
