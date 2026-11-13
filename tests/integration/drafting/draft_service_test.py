@@ -1,23 +1,27 @@
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
-from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
+from uuid import UUID
+
+from linkedin_idea_to_post.config import DraftingSettings
 from linkedin_idea_to_post.drafting.draft_service import DraftService
+from tests.fake_draft_writer import FakeDraftWriter
 
 
-class MockDraftWriter(DraftWriter):
-    def write(self, request: DraftRequest) -> Draft:
-        return Draft(body=request.idea)
+def test_draft_service_saves_a_draft(in_memory_archive, post_factory):
+    post1 = post_factory(id=UUID(int=1), body="Post 1 body.")
+    post2 = post_factory(id=UUID(int=2), body="Post 2 body.")
 
+    in_memory_archive.save(post1)
+    in_memory_archive.save(post2)
 
-def test_draft_service_saves_a_draft():
-    writer = MockDraftWriter()
-    archive = SqliteArchive()
-    draft_service = DraftService(writer, archive)
+    drafting_settings = DraftingSettings()
+    writer = FakeDraftWriter()
+    draft_service = DraftService(
+        settings=drafting_settings, writer=writer, archive=in_memory_archive
+    )
 
-    assert len(archive.get_all()) == 0
+    request_idea = "My idea"
+    draft_post = draft_service.draft(request_idea)
 
-    request = "My idea"
-    draft_post = draft_service.draft(request)
-
-    post = archive.get(draft_post.id)
-    assert post is not None
+    post = in_memory_archive.get(draft_post.id)
     assert post == draft_post
+    expected_body = f"{request_idea}\n\nVoice examples received (2):\nExample #1:\n{post2.body}\n\nExample #2:\n{post1.body}\n\n"
+    assert post.body == expected_body

@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
+from linkedin_idea_to_post.ai_workflow.dry_run_draft_writer import DryRunDraftWriter
 from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.config import AppConfig
 from linkedin_idea_to_post.drafting.draft_service import DraftService
@@ -53,9 +53,15 @@ def show_config() -> None:
 def draft(idea: str) -> None:
     """Generates a post from the given idea and stores it in the database."""
     config = AppConfig()
-    archive = SqliteArchive(db_path=config.archive.db_path)
-    writer = CrewaiDraftWriter()
-    draft_service = DraftService(writer=writer, archive=archive)
+    archive = SqliteArchive(settings=config.archive)
+    writer = (
+        DryRunDraftWriter()
+        if config.drafting.writer == "dry-run"
+        else DryRunDraftWriter()
+    )
+    draft_service = DraftService(
+        settings=config.drafting, writer=writer, archive=archive
+    )
     post = draft_service.draft(idea)
 
     content = (
@@ -88,7 +94,7 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
     The --commit flag imports the parsed posts to the storage, ignoring parsing and mapping errors.
     """
     config = AppConfig()
-    archive = SqliteArchive(db_path=config.archive.db_path)
+    archive = SqliteArchive(settings=config.archive)
     importer = CsvImporter(parser=CsvParser(), archive=archive)
 
     with console.status("[bold green]Parsing and validating CSV...[/bold green]"):
@@ -171,7 +177,7 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
 def list_posts(limit: int, interactive: bool) -> None:
     """List recent posts from the archive with interactive viewing."""
     config = AppConfig()
-    archive = SqliteArchive(db_path=config.archive.db_path)
+    archive = SqliteArchive(settings=config.archive)
     posts = archive.get_all(limit=limit)
 
     if not posts:

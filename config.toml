@@ -1,4 +1,8 @@
 ######################################################################
 # application config
 [archive]
-db_path = "data/archive/db.sqlite"
+db_path = "./data/archive.db"
+
+[drafting]
+voice_examples_count = 3
+writer = "dry-run"

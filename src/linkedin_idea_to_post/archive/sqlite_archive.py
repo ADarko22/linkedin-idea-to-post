@@ -1,7 +1,7 @@
 import sqlite3
-from pathlib import Path
 from uuid import UUID
 
+from linkedin_idea_to_post.config import ArchiveSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 
 _CREATE_SCHEMA = """
@@ -29,11 +29,8 @@ DEFAULT_PAGE_SIZE = 50
 
 
 class SqliteArchive:
-    def __init__(self, db_path: str | Path = ":memory:") -> None:
-        if db_path != ":memory:":
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-
-        self._conn = sqlite3.connect(db_path)
+    def __init__(self, settings: ArchiveSettings) -> None:
+        self._conn = sqlite3.connect(settings.db_path)
         self._conn.row_factory = sqlite3.Row
         # create the table here if it doesn't exist
         self._conn.executescript(_CREATE_SCHEMA)
