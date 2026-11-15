@@ -2,6 +2,7 @@ import sqlite3
 from uuid import UUID
 
 from linkedin_idea_to_post.config import ArchiveSettings
+from linkedin_idea_to_post.domain.archiving import DEFAULT_PAGE_SIZE, PostArchive
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 
 _CREATE_SCHEMA = """
@@ -25,10 +26,8 @@ _GET_POST = """
     WHERE id = ?
     """
 
-DEFAULT_PAGE_SIZE = 50
 
-
-class SqliteArchive:
+class SqliteArchive(PostArchive):
     def __init__(self, settings: ArchiveSettings) -> None:
         self._conn = sqlite3.connect(settings.db_path)
         self._conn.row_factory = sqlite3.Row

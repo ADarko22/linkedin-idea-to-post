@@ -2,22 +2,61 @@
 
 ## Architecture
 
-todo - add component diagrams with the boundaries between modules (top-down view)
+### Drafting Components
 
 ```mermaid
-architecture-beta
-    group api(cloud)[API]
+C4Component
+    Container_Boundary(draft_b, "Drafting") {
+        Component(drafter, "DraftService", "Drafter")
+    }
 
-    service db(database)[Database] in api
-    service disk1(disk)[Storage] in api
-    service disk2(disk)[Storage] in api
-    service server(server)[Server] in api
+    System_Boundary(domain_b, "Domain") {
+        Component(writer_p, "DraftWriter", "Protocol")
+        Component(post_m, "Post", "Data Model")
+        Component(archive_p, "PostArchive", "Protocol")
+    }
 
-    db:L -- R:server
-    disk1:T -- B:server
-    disk2:T -- B:db
+    Container_Boundary(workflow_b, "AI Workflow") {
+        Component(writer, "CrewaiDraftWriter", "CrewAI")
+    }
+    Container_Boundary(archive_b, "Archive") {
+        ComponentDb(archive, "SqliteArchive", "SQLite")
+    }
 
+    Rel_R(drafter, writer_p, "uses")
+    Rel_R(drafter, post_m, "creates")
+    Rel_R(drafter, archive_p, "uses")
+    Rel_L(writer, writer_p, "implements")
+    Rel_L(archive, post_m, "persists")
+    Rel_L(archive, archive_p, "implements")
+    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
 ```
+
+### Importing Components
+
+```mermaid
+C4Component
+    Container_Boundary(ingestion_b, "Linkedin (Ingestion)") {
+        Component(importer, "CsvImporter", "Importer")
+    }
+
+    System_Boundary(domain_b, "Domain") {
+        Component(post_m, "Post", "Data Model")
+        Component(archive_p, "PostArchive", "Protocol")
+    }
+
+    Container_Boundary(archive_b, "Archive") {
+        ComponentDb(archive, "SqliteArchive", "SQLite")
+    }
+
+    Rel_R(importer, post_m, "creates")
+    Rel_R(importer, archive_p, "uses")
+    Rel_L(archive, post_m, "persists")
+    Rel_L(archive, archive_p, "implements")
+    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
+```
+
+_Note: visualize it on  [mermaid.ai](https://mermaid.ai/live) if the Markdown render doesn't work._
 
 ## Operational Flows
 
@@ -32,8 +71,9 @@ flowchart LR
     B -- generates --> C[Post]
 ```
 
-### Importing posts from LinkedIn
+### Importing posts from ~~LinkedIn~~
 
+~~~~
 Downloading the LinkedIn data from [download-my-data](https://www.linkedin.com/mypreferences/d/download-my-data) and
 importing the Shares.csv file with [`CsvImporter`](linkedin/csv_importer.py).
 

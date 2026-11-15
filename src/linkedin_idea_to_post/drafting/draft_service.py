@@ -1,8 +1,8 @@
 import uuid
 from datetime import UTC, datetime
 
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.config import DraftingSettings
+from linkedin_idea_to_post.domain.archiving import PostArchive
 from linkedin_idea_to_post.domain.drafting import DraftRequest, DraftWriter
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
@@ -10,7 +10,7 @@ from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_
 
 class DraftService:
     def __init__(
-        self, settings: DraftingSettings, writer: DraftWriter, archive: SqliteArchive
+        self, settings: DraftingSettings, writer: DraftWriter, archive: PostArchive
     ) -> None:
         self.settings = settings
         self.writer = writer

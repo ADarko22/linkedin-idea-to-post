@@ -43,9 +43,7 @@ no_implicit_optional = true
 
 # Per-module overrides for third-party libraries or legacy code
 [[tool.mypy.overrides]]
-module = [
-    "legacy_module.*",
-]
+module = []
 ignore_errors = true
 
 ######################################################################

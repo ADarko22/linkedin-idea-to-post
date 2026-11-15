@@ -5,7 +5,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
 from linkedin_idea_to_post.ai_workflow.dry_run_draft_writer import DryRunDraftWriter
+from linkedin_idea_to_post.ai_workflow.prompt_echo_llm import PromptEchoLLM
 from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.config import AppConfig
 from linkedin_idea_to_post.drafting.draft_service import DraftService
@@ -57,7 +59,7 @@ def draft(idea: str) -> None:
     writer = (
         DryRunDraftWriter()
         if config.drafting.writer == "dry-run"
-        else DryRunDraftWriter()
+        else CrewaiDraftWriter(PromptEchoLLM())
     )
     draft_service = DraftService(
         settings=config.drafting, writer=writer, archive=archive

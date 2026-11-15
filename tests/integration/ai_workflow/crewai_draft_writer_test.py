@@ -1,8 +1,11 @@
+import pytest
+
 from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
 from linkedin_idea_to_post.domain.drafting import DraftRequest
 from tests.fake_llm import FakeLLM
 
 
+@pytest.mark.slow
 def test_write_with_voice_examples() -> None:
     fake_llm = FakeLLM()
     draft_writer = CrewaiDraftWriter(fake_llm)
@@ -16,6 +19,7 @@ def test_write_with_voice_examples() -> None:
     )
 
 
+@pytest.mark.slow
 def test_write_without_voice_examples() -> None:
     fake_llm = FakeLLM()
     draft_writer = CrewaiDraftWriter(fake_llm)

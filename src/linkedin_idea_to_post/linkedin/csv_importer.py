@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
+from linkedin_idea_to_post.domain.archiving import PostArchive
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
 from linkedin_idea_to_post.linkedin.mapper import (
     raw_post_to_post,
@@ -31,7 +31,7 @@ def process_parser_result(parser_result: CsvParserResult) -> CsvImporterPrepareR
 
 
 class CsvImporter:
-    def __init__(self, parser: CsvParser, archive: SqliteArchive):
+    def __init__(self, parser: CsvParser, archive: PostArchive):
         self.csv_parser = parser
         self.archive = archive
 
