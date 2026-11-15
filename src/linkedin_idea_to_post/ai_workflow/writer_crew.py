@@ -31,5 +31,5 @@ class WriterCrew:
             agents=[self.writer()],  # type: ignore[call-arg]
             tasks=[self.write_post()],  # type: ignore[call-arg]
             process=Process.sequential,
-            verbose=True,
+            verbose=False,
         )

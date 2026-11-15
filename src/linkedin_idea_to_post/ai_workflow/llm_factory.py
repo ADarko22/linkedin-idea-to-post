@@ -1,10 +1,37 @@
 from typing import Any
 
-from crewai import BaseLLM, Task
+from crewai import LLM, BaseLLM, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.tools import BaseTool
 from crewai.utilities.types import LLMMessage
 from pydantic import BaseModel
+
+from linkedin_idea_to_post.config import ConfigurationError, LlmSettings
+
+
+def build_llm(llm_settings: LlmSettings | None, offline: bool = False) -> BaseLLM:
+    if offline:
+        return PromptEchoLLM()
+
+    if llm_settings is None:
+        raise ConfigurationError(
+            "LlmSettings not configured in 'online' mode.",
+            hint="Add the appropriate section to config.toml.",
+        )
+
+    api_key = llm_settings.api_key.get_secret_value().strip()
+    if not api_key:
+        raise ConfigurationError(
+            "LLM API key is missing.",
+            hint="Set the appropriate LLM_API_KEY in your environment.",
+        )
+
+    return LLM(
+        model=llm_settings.model,
+        api_key=api_key,
+        temperature=llm_settings.temperature,
+        max_tokens=llm_settings.max_tokens,
+    )
 
 
 class PromptEchoLLM(BaseLLM):

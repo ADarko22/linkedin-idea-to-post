@@ -5,4 +5,9 @@ db_path = "./data/archive.db"
 
 [drafting]
 voice_examples_count = 3
-writer = "dry-run"
+
+[writer_llm]
+model = "gemini/gemini-3.5-flash-lite"
+temperature = 0.6       # higher temperature for creative writing
+max_tokens = 4096
+

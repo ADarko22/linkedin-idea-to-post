@@ -1,9 +1,12 @@
 write_post:
   description: >
-    Write a comprehensive LinkedIn post about the core idea: {idea}.
+    Write a comprehensive LinkedIn post about the core idea: "{idea}".
+    
+    
     Use the "voice" derived from the style and language adopted in the examples of posts below. 
     Use these examples only for the writing style and not as context for the content.
-    
+    Limit the use of emoji.
+    The hashtags inherent with the post should go on the last line.
     
     POST STYLE EXAMPLES:
     

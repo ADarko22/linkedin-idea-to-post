@@ -1,15 +1,16 @@
 from pathlib import Path
 
 import click
+from click.exceptions import Exit
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
-from linkedin_idea_to_post.ai_workflow.dry_run_draft_writer import DryRunDraftWriter
-from linkedin_idea_to_post.ai_workflow.prompt_echo_llm import PromptEchoLLM
+from linkedin_idea_to_post.ai_workflow.llm_factory import build_llm
 from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
-from linkedin_idea_to_post.config import AppConfig
+from linkedin_idea_to_post.config import AppConfig, ConfigurationError
 from linkedin_idea_to_post.drafting.draft_service import DraftService
 from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
@@ -52,26 +53,46 @@ def show_config() -> None:
     required=True,
     help="The user's prompt.",
 )
-def draft(idea: str) -> None:
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Only drafts the content of the post, without saving to storage.",
+)
+@click.option(
+    "--offline",
+    is_flag=True,
+    help="No LLM is used. The draft is simply the prompt that would be sent to an LLM.",
+)
+def draft(idea: str, dry_run: bool, offline: bool) -> None:
     """Generates a post from the given idea and stores it in the database."""
-    config = AppConfig()
+    try:
+        config = AppConfig()
+        llm = build_llm(llm_settings=config.writer_llm, offline=offline)
+    except ConfigurationError as exc:
+        console.print(f"[bold red]Configuration error:[/bold red] {exc}")
+        if exc.hint:
+            console.print(f"[dim]Hint: {exc.hint}[/dim]")
+        raise Exit(code=1) from exc
+
+    writer = CrewaiDraftWriter(llm=llm)
     archive = SqliteArchive(settings=config.archive)
-    writer = (
-        DryRunDraftWriter()
-        if config.drafting.writer == "dry-run"
-        else CrewaiDraftWriter(PromptEchoLLM())
-    )
     draft_service = DraftService(
         settings=config.drafting, writer=writer, archive=archive
     )
-    post = draft_service.draft(idea)
 
-    content = (
-        f"[dim]ID: {post.id} | Origin: {post.origin} | Status: {post.status}[/dim]\n"
-        f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n\n"
-        f"[bold yellow]{post.title}[/bold yellow]\n\n{post.body}"
-    )
-    console.print(Panel(content, title="Generated Post", border_style="cyan"))
+    if dry_run:
+        draft_post = draft_service.compose(idea)
+        content = f"[dim]{Text(draft_post.body)}[/dim]\n"
+        console.print(Panel(content, title="Generated Draft", border_style="dim"))
+
+    else:
+        post = draft_service.draft(idea)
+        content = (
+            f"[dim]ID: {post.id} | Origin: {post.origin} | Status: {post.status}[/dim]\n"
+            f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n\n"
+            f"[bold yellow]{post.title}[/bold yellow]\n\n{post.body}"
+        )
+        console.print(Panel(content, title="Generated Post", border_style="cyan"))
 
 
 @cli.command("import-csv")

@@ -54,7 +54,7 @@ Available commands:
 
 Configuration options are defined in [config.py](src/linkedin_idea_to_post/config.py) and set via:
 - the [config.toml](config.toml) file
-- or corresponding env variables (e.g. `DRAFTING__WRITER="crewai"`)
+- or corresponding env variables (e.g. `WRITER_LLM__API_KEY="..."`)
 
 ### Pre-commit Hooks
 

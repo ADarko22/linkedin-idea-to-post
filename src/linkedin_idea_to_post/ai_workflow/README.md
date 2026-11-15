@@ -43,10 +43,11 @@ The `CrewaiDraftWriter` class implements the `DraftWriter` contract using CrewAI
 
 The writer receives an LLM instance through its constructor and passes it to the crew.
 
-#### The [PromptEchoLLM](prompt_echo_llm.py)
+#### The [llm_factory.py](llm_factory.py)
 
-The `PromptEchoLLM` class extends `BaseLLM` for a local, offline, LLM implementation to use for development and
-debugging of what the Agents and Tasks prompts are provided to the LLM.
+The `build_llm` factory method builds a `BaseLLM` based on the `LlmSettings` from [config.py](../config.py).
+A custom `PromptEchoLLM` class, which extends `BaseLLM`, is provided as an 'offline' option, useful for development and
+debugging what prompts would be sent to an 'online' LLM.
 
 ### The [WriterCrew](writer_crew.py)
 
