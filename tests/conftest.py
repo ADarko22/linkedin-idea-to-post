@@ -1,5 +1,6 @@
 import csv
-from collections.abc import Callable, Sequence
+import sqlite3
+from collections.abc import Callable, Iterator, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -9,9 +10,11 @@ import pytest
 
 from linkedin_idea_to_post.config import PersistenceSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.retrieval import PostRetriever
 from linkedin_idea_to_post.domain.storage import PostStorage
 from linkedin_idea_to_post.linkedin.model import RawPost
 from linkedin_idea_to_post.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.persistence.sqlite_post_retrieval import SqlitePostRetriever
 from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 
@@ -78,8 +81,20 @@ def create_csv_post_file(tmp_path: Path) -> CSVFactory:
     return _create_file
 
 
+# In-Memory DB Connection being shared by in_memory_storage and in_memory_retriever
 @pytest.fixture
-def in_memory_storage() -> PostStorage:
+def in_memory_db_connection() -> Iterator[sqlite3.Connection]:
     settings = PersistenceSettings(db_path=":memory:")
-    db_connection = create_sqlite_connection(settings)
-    return SqlitePostStorage(db_connection)
+    conn = create_sqlite_connection(settings)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def in_memory_storage(in_memory_db_connection: sqlite3.Connection) -> PostStorage:
+    return SqlitePostStorage(in_memory_db_connection)
+
+
+@pytest.fixture
+def in_memory_retriever(in_memory_db_connection: sqlite3.Connection) -> PostRetriever:
+    return SqlitePostRetriever(in_memory_db_connection)

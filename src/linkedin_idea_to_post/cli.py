@@ -15,6 +15,7 @@ from linkedin_idea_to_post.drafting.draft_service import DraftService
 from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
 from linkedin_idea_to_post.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.persistence.sqlite_post_retrieval import SqlitePostRetriever
 from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 console = Console()
@@ -79,8 +80,9 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
     writer = CrewaiDraftWriter(llm=llm)
     db_connection = create_sqlite_connection(settings=config.storage)
     storage = SqlitePostStorage(db_connection=db_connection)
+    retriever = SqlitePostRetriever(db_connection=db_connection)
     draft_service = DraftService(
-        settings=config.drafting, writer=writer, storage=storage
+        settings=config.drafting, writer=writer, storage=storage, retriever=retriever
     )
 
     if dry_run:

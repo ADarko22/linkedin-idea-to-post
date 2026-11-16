@@ -18,7 +18,7 @@ class WriterCrew:
     @agent
     def writer(self) -> Agent:
         config = cast(dict[str, Any], self.agents_config)
-        return Agent(config=config["writer"], verbose=False, llm=self._llm)
+        return Agent(config=config["writer"], verbose=True, llm=self._llm)
 
     @task
     def write_post(self) -> Task:
@@ -31,5 +31,5 @@ class WriterCrew:
             agents=[self.writer()],  # type: ignore[call-arg]
             tasks=[self.write_post()],  # type: ignore[call-arg]
             process=Process.sequential,
-            verbose=False,
+            verbose=True,
         )

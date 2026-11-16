@@ -6,7 +6,8 @@ from linkedin_idea_to_post.config import DraftingSettings
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
-from linkedin_idea_to_post.domain.storage import PostGetQuery, PostStorage
+from linkedin_idea_to_post.domain.retrieval import PostRetriever, PostSearchQuery
+from linkedin_idea_to_post.domain.storage import PostStorage
 
 
 class DraftService:
@@ -15,15 +16,17 @@ class DraftService:
         settings: DraftingSettings,
         writer: DraftWriter,
         storage: PostStorage,
+        retriever: PostRetriever,
         timestamp_provider: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.settings = settings
         self.writer = writer
         self.storage = storage
+        self.retriever = retriever
         self.timestamp_provider = timestamp_provider
 
     def compose(self, idea: str) -> Draft:
-        voice_example_posts = self._find_voice_examples()
+        voice_example_posts = self._find_voice_examples(idea)
 
         voice_examples = [post.body for post in voice_example_posts]
         draft_request = DraftRequest(idea=idea, voice_examples=voice_examples)
@@ -34,10 +37,7 @@ class DraftService:
 
         post_title = extract_title(draft.body)
         post_id = uuid.uuid5(uuid.NAMESPACE_URL, idea)
-
-        # todo add a semantic/intent search to extract topics from the draft
         topics = extract_hashtags(draft.body)
-
         now = self.timestamp_provider()
 
         draft_post = Post(
@@ -56,10 +56,11 @@ class DraftService:
 
         return draft_post
 
-    def _find_voice_examples(self) -> list[Post]:
-        query = PostGetQuery(
-            limit=self.settings.voice_examples_count,
+    def _find_voice_examples(self, idea: str) -> list[Post]:
+        query = PostSearchQuery(
+            text=idea,
             origins=[PostOrigin.HUMAN],
             statuses=[PostStatus.PUBLISHED],
+            limit=self.settings.voice_examples_count,
         )
-        return self.storage.get_all(query)
+        return self.retriever.full_text_search(query)

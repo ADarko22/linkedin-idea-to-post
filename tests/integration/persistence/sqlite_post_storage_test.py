@@ -21,6 +21,14 @@ def test_save_then_get_returns_an_equal_post(in_memory_storage, sample_post) -> 
     assert post == sample_post
 
 
+def test_save_then_delete_removes_existing_post(in_memory_storage, sample_post) -> None:
+    in_memory_storage.save(sample_post)
+    post = in_memory_storage.get(sample_post.id)
+    assert post == sample_post
+    in_memory_storage.delete(sample_post.id)
+    assert in_memory_storage.get(sample_post.id) is None
+
+
 def test_save_same_id_twice_updates_the_post(in_memory_storage, sample_post) -> None:
     in_memory_storage.save(sample_post)
     updated_post = sample_post.model_copy(update={"title": "Updated Title"})

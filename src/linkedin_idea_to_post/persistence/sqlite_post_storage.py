@@ -12,6 +12,9 @@ _UPSERT_POST = """
         doc = excluded.doc
     """
 
+_DELETE_POST = """
+    DELETE FROM posts WHERE id = ?"""
+
 _GET_POST = """
     SELECT doc
     FROM posts
@@ -28,6 +31,11 @@ class SqlitePostStorage(PostStorage):
             json_post = post.model_dump_json()
             parameters = (str(post.id), json_post)
             self._db_connection.execute(_UPSERT_POST, parameters)
+
+    def delete(self, post_id: UUID) -> None:
+        with self._db_connection:
+            parameters = (str(post_id),)
+            self._db_connection.execute(_DELETE_POST, parameters)
 
     def get(self, post_id: UUID) -> Post | None:
         with self._db_connection:

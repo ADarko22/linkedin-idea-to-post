@@ -12,24 +12,28 @@ C4Component
 
     System_Boundary(domain_b, "Domain") {
         Component(writer_p, "DraftWriter", "Protocol")
+        Component(storage_p, "PostStorage", "Protocol")
         Component(post_m, "Post", "Data Model")
-        Component(storage_p, "Poststorage", "Protocol")
+        Component(retriever_p, "PostRetriever", "Protocol")
     }
 
     Container_Boundary(workflow_b, "AI Workflow") {
         Component(writer, "CrewaiDraftWriter", "CrewAI")
     }
+    
     Container_Boundary(storage_b, "storage") {
         ComponentDb(storage, "SqlitePostStorage", "SQLite")
+        ComponentDb(retriever, "SqlitePostRetriever", "SQLite")
     }
 
     Rel_R(drafter, writer_p, "uses")
     Rel_R(drafter, post_m, "creates")
     Rel_R(drafter, storage_p, "uses")
+    Rel_R(drafter, retriever_p, "uses")
     Rel_L(writer, writer_p, "implements")
-    Rel_L(storage, post_m, "persists")
     Rel_L(storage, storage_p, "implements")
-    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
+    Rel_L(retriever, retriever_p, "implements")
+    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="4")
 ```
 
 ### Importing Components
@@ -42,7 +46,8 @@ C4Component
 
     System_Boundary(domain_b, "Domain") {
         Component(post_m, "Post", "Data Model")
-        Component(storage_p, "Poststorage", "Protocol")
+        Component(storage_p, "PostStorage", "Protocol")
+        Component(retriever_p, "PostRetriever", "Protocol")
     }
 
     Container_Boundary(storage_b, "storage") {
@@ -51,7 +56,6 @@ C4Component
 
     Rel_R(importer, post_m, "creates")
     Rel_R(importer, storage_p, "uses")
-    Rel_L(storage, post_m, "persists")
     Rel_L(storage, storage_p, "implements")
     UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
 ```
