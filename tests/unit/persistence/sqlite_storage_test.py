@@ -1,11 +1,13 @@
 import pytest
 
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.domain.post import PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.storage import PostGetQuery
+from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 
 def test_build_get_all_with_filter_query_on_pagination():
-    sql_query = SqliteArchive.build_get_all_with_filter_query(limit=10, page=2)
+    query = PostGetQuery(limit=10, page=2)
+    sql_query = SqlitePostStorage.build_get_all_with_filter_query(query)
     expected_query = """
         SELECT doc
         FROM posts
@@ -16,9 +18,8 @@ def test_build_get_all_with_filter_query_on_pagination():
 
 
 def test_build_get_all_with_filter_query_on_filter_status():
-    sql_query = SqliteArchive.build_get_all_with_filter_query(
-        statuses=[PostStatus.DRAFT]
-    )
+    query = PostGetQuery(statuses=[PostStatus.DRAFT])
+    sql_query = SqlitePostStorage.build_get_all_with_filter_query(query)
     expected_query = """
         SELECT doc
         FROM posts
@@ -30,9 +31,8 @@ def test_build_get_all_with_filter_query_on_filter_status():
 
 
 def test_build_get_all_with_filter_query_on_filter_origins():
-    sql_query = SqliteArchive.build_get_all_with_filter_query(
-        origins=[PostOrigin.AI_DRAFT, PostOrigin.AI_EDIT]
-    )
+    query = PostGetQuery(origins=[PostOrigin.AI_DRAFT, PostOrigin.AI_EDIT])
+    sql_query = SqlitePostStorage.build_get_all_with_filter_query(query)
     expected_query = """
         SELECT doc
         FROM posts
@@ -44,12 +44,13 @@ def test_build_get_all_with_filter_query_on_filter_origins():
 
 
 def test_build_get_all_with_filter_query_on_filter_statuses_and_origins_and_pagination():
-    sql_query = SqliteArchive.build_get_all_with_filter_query(
+    query = PostGetQuery(
         statuses=[PostStatus.DRAFT, PostStatus.PUBLISHED],
         origins=[PostOrigin.AI_DRAFT, PostOrigin.AI_EDIT],
         limit=5,
         page=10,
     )
+    sql_query = SqlitePostStorage.build_get_all_with_filter_query(query)
     expected_query = """
         SELECT doc
         FROM posts
@@ -63,9 +64,9 @@ def test_build_get_all_with_filter_query_on_filter_statuses_and_origins_and_pagi
 
 def test_build_get_all_with_filter_query_on_invalid_limit_raises_error():
     with pytest.raises(ValueError):
-        SqliteArchive.build_get_all_with_filter_query(limit=0, page=1)
+        SqlitePostStorage.build_get_all_with_filter_query(PostGetQuery(limit=0, page=1))
 
 
 def test_build_get_all_with_filter_query_on_invalid_page_raises_error():
     with pytest.raises(ValueError):
-        SqliteArchive.build_get_all_with_filter_query(page=0)
+        SqlitePostStorage.build_get_all_with_filter_query(PostGetQuery(page=0))

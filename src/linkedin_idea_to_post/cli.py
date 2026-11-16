@@ -9,11 +9,13 @@ from rich.text import Text
 
 from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
 from linkedin_idea_to_post.ai_workflow.llm_factory import build_llm
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
 from linkedin_idea_to_post.config import AppConfig, ConfigurationError
+from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.drafting.draft_service import DraftService
 from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
+from linkedin_idea_to_post.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 console = Console()
 
@@ -75,9 +77,10 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
         raise Exit(code=1) from exc
 
     writer = CrewaiDraftWriter(llm=llm)
-    archive = SqliteArchive(settings=config.archive)
+    db_connection = create_sqlite_connection(settings=config.storage)
+    storage = SqlitePostStorage(db_connection=db_connection)
     draft_service = DraftService(
-        settings=config.drafting, writer=writer, archive=archive
+        settings=config.drafting, writer=writer, storage=storage
     )
 
     if dry_run:
@@ -117,8 +120,9 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
     The --commit flag imports the parsed posts to the storage, ignoring parsing and mapping errors.
     """
     config = AppConfig()
-    archive = SqliteArchive(settings=config.archive)
-    importer = CsvImporter(parser=CsvParser(), archive=archive)
+    db_connection = create_sqlite_connection(settings=config.storage)
+    storage = SqlitePostStorage(db_connection=db_connection)
+    importer = CsvImporter(parser=CsvParser(), storage=storage)
 
     with console.status("[bold green]Parsing and validating CSV...[/bold green]"):
         result = importer.prepare(csv_path)
@@ -173,7 +177,9 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
             console.print()
 
     if commit:
-        with console.status("[bold green]Committing posts to archive...[/bold green]"):
+        with console.status(
+            "[bold green]Committing posts to persistence...[/bold green]"
+        ):
             commit_result = importer.commit(result)
 
         console.print(
@@ -198,16 +204,17 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
     help="Show posts interactively.",
 )
 def list_posts(limit: int, interactive: bool) -> None:
-    """List recent posts from the archive with interactive viewing."""
+    """List recent posts from the persistence with interactive viewing."""
     config = AppConfig()
-    archive = SqliteArchive(settings=config.archive)
-    posts = archive.get_all(limit=limit)
+    db_connection = create_sqlite_connection(settings=config.storage)
+    storage = SqlitePostStorage(db_connection=db_connection)
+    posts = storage.get_all(PostGetQuery(limit=limit))
 
     if not posts:
-        console.print("[yellow]No posts found in the archive.[/yellow]")
+        console.print("[yellow]No posts found in the persistence.[/yellow]")
         return
 
-    console.print(f"[bold cyan]Found {len(posts)} posts in archive.[/bold cyan]\n")
+    console.print(f"[bold cyan]Found {len(posts)} posts in persistence.[/bold cyan]\n")
 
     if interactive:
         console.print(

@@ -7,10 +7,12 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from linkedin_idea_to_post.archive.sqlite_archive import SqliteArchive
-from linkedin_idea_to_post.config import ArchiveSettings
+from linkedin_idea_to_post.config import PersistenceSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.storage import PostStorage
 from linkedin_idea_to_post.linkedin.model import RawPost
+from linkedin_idea_to_post.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 
 @pytest.fixture
@@ -77,6 +79,7 @@ def create_csv_post_file(tmp_path: Path) -> CSVFactory:
 
 
 @pytest.fixture
-def in_memory_archive():
-    archive_settings = ArchiveSettings(db_path=":memory:")
-    return SqliteArchive(settings=archive_settings)
+def in_memory_storage() -> PostStorage:
+    settings = PersistenceSettings(db_path=":memory:")
+    db_connection = create_sqlite_connection(settings)
+    return SqlitePostStorage(db_connection)

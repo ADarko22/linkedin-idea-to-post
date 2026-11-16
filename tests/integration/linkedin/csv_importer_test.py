@@ -1,11 +1,11 @@
 # todo integration test with CsvParser to test the prepare returns a CsvImporterResult both with posts and errors
-
+from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
 from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
 
 
 def test_prepare_and_commit_persists_valid_posts(
-    in_memory_archive, create_csv_post_file
+    in_memory_storage, create_csv_post_file
 ) -> None:
     mock_rows = [
         ["Date", "ShareLink", "ShareCommentary"],
@@ -34,7 +34,7 @@ def test_prepare_and_commit_persists_valid_posts(
     csv_file_path = create_csv_post_file(mock_rows)
 
     parser = CsvParser()
-    importer = CsvImporter(parser, in_memory_archive)
+    importer = CsvImporter(parser, in_memory_storage)
 
     result = importer.prepare(csv_file_path)
     assert len(result.posts) == 2
@@ -42,10 +42,10 @@ def test_prepare_and_commit_persists_valid_posts(
     assert len(result.mapping_errors) == 1
     assert len(result.mapping_errors[0].errors) == 2
 
-    stored_posts = in_memory_archive.get_all()
+    stored_posts = in_memory_storage.get_all(PostGetQuery())
     assert len(stored_posts) == 0
 
     importer.commit(prepare_result=result)
 
-    stored_posts = in_memory_archive.get_all()
+    stored_posts = in_memory_storage.get_all(PostGetQuery())
     assert len(stored_posts) == 2

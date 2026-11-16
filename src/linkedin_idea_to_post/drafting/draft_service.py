@@ -3,10 +3,10 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 from linkedin_idea_to_post.config import DraftingSettings
-from linkedin_idea_to_post.domain.archiving import PostArchive
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
+from linkedin_idea_to_post.domain.storage import PostGetQuery, PostStorage
 
 
 class DraftService:
@@ -14,12 +14,12 @@ class DraftService:
         self,
         settings: DraftingSettings,
         writer: DraftWriter,
-        archive: PostArchive,
+        storage: PostStorage,
         timestamp_provider: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.settings = settings
         self.writer = writer
-        self.archive = archive
+        self.storage = storage
         self.timestamp_provider = timestamp_provider
 
     def compose(self, idea: str) -> Draft:
@@ -52,14 +52,14 @@ class DraftService:
             updated_at=now,
         )
 
-        self.archive.save(draft_post)
+        self.storage.save(draft_post)
 
         return draft_post
 
     def _find_voice_examples(self) -> list[Post]:
-        posts = self.archive.get_all(
+        query = PostGetQuery(
             limit=self.settings.voice_examples_count,
             origins=[PostOrigin.HUMAN],
             statuses=[PostStatus.PUBLISHED],
         )
-        return posts
+        return self.storage.get_all(query)

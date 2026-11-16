@@ -1,6 +1,6 @@
 ######################################################################
 # application config
-[archive]
+[storage]
 db_path = "./data/archive.db"
 
 [drafting]

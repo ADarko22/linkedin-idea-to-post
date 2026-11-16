@@ -50,7 +50,7 @@ Available commands:
 |---------------|----------------------------------------|
 | `show-config` | Display application configuration.     |
 | `csv-import`  | Import LinkedIn posts from a CSV file. |
-| `list-posts`  | List archived posts.                   |
+| `list-posts`  | List stored posts.                     |
 
 Configuration options are defined in [config.py](src/linkedin_idea_to_post/config.py) and set via:
 - the [config.toml](config.toml) file

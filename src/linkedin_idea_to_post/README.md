@@ -13,22 +13,22 @@ C4Component
     System_Boundary(domain_b, "Domain") {
         Component(writer_p, "DraftWriter", "Protocol")
         Component(post_m, "Post", "Data Model")
-        Component(archive_p, "PostArchive", "Protocol")
+        Component(storage_p, "Poststorage", "Protocol")
     }
 
     Container_Boundary(workflow_b, "AI Workflow") {
         Component(writer, "CrewaiDraftWriter", "CrewAI")
     }
-    Container_Boundary(archive_b, "Archive") {
-        ComponentDb(archive, "SqliteArchive", "SQLite")
+    Container_Boundary(storage_b, "storage") {
+        ComponentDb(storage, "SqlitePostStorage", "SQLite")
     }
 
     Rel_R(drafter, writer_p, "uses")
     Rel_R(drafter, post_m, "creates")
-    Rel_R(drafter, archive_p, "uses")
+    Rel_R(drafter, storage_p, "uses")
     Rel_L(writer, writer_p, "implements")
-    Rel_L(archive, post_m, "persists")
-    Rel_L(archive, archive_p, "implements")
+    Rel_L(storage, post_m, "persists")
+    Rel_L(storage, storage_p, "implements")
     UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
 ```
 
@@ -42,17 +42,17 @@ C4Component
 
     System_Boundary(domain_b, "Domain") {
         Component(post_m, "Post", "Data Model")
-        Component(archive_p, "PostArchive", "Protocol")
+        Component(storage_p, "Poststorage", "Protocol")
     }
 
-    Container_Boundary(archive_b, "Archive") {
-        ComponentDb(archive, "SqliteArchive", "SQLite")
+    Container_Boundary(storage_b, "storage") {
+        ComponentDb(storage, "SqlitePostStorage", "SQLite")
     }
 
     Rel_R(importer, post_m, "creates")
-    Rel_R(importer, archive_p, "uses")
-    Rel_L(archive, post_m, "persists")
-    Rel_L(archive, archive_p, "implements")
+    Rel_R(importer, storage_p, "uses")
+    Rel_L(storage, post_m, "persists")
+    Rel_L(storage, storage_p, "implements")
     UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
 ```
 

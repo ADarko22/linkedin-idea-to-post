@@ -12,7 +12,7 @@ sequenceDiagram
     actor User
     participant Importer as CsvImporter
     participant Parser as CsvParser
-    participant DB as SqliteArchive
+    participant DB as SqlitePostStorage
     Note over User, DB: 1. Prepare Import Operation
     User ->> Importer: prepare("path/to/Shares.csv")
     activate Importer
@@ -53,7 +53,7 @@ The `CsvImporter` class, responsible for importing LinkedIn posts into the appli
 | Method                                                                        | Description                                                                                                                             |
 |-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `prepare(file_path: Path) -> CsvImporterPrepareResult`                        | Parses the csv file with `CsvImporter` and maps the `RawPost` objects to `Post` objects, while collecting mapping errors along the way. |
-| `commit(prepare_result: CsvImporterPrepareResult) -> CsvImporterCommitResult` | Stores `Post` objects using `SqliteArchive` by ignoring eventual parsing and mappin errors which happened during prepare.               |
+| `commit(prepare_result: CsvImporterPrepareResult) -> CsvImporterCommitResult` | Stores `Post` objects using `SqlitePostStorage` by ignoring eventual parsing and mappin errors which happened during prepare.               |
 
 #### The [CsvParser](csv_parser.py)
 
@@ -67,4 +67,4 @@ The `CsvParser` class, responsible for reading and parsing the `Shares.csv` file
 
 1. [Post](../domain/post.py) (from domain): the core entity across the application, created by the import process and
    stored in via the persistence layer.
-2. [SqliteArchive](../archive/sqlite_archive.py) (from archive): the application's persistence layer.
+2. [SqlitePostStorage](../persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.

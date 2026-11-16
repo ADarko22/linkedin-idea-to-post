@@ -10,8 +10,8 @@ from pydantic_settings import (
 )
 
 
-class ArchiveSettings(BaseModel):
-    db_path: Path | str = Field(default="./data/archive.db")
+class PersistenceSettings(BaseModel):
+    db_path: Path | str = Field(default="./data/persistence.db")
 
 
 class DraftingSettings(BaseModel):
@@ -29,7 +29,7 @@ class LlmSettings(BaseModel):
 
 
 class AppConfig(BaseSettings):
-    archive: ArchiveSettings = Field(default_factory=ArchiveSettings)
+    storage: PersistenceSettings = Field(default_factory=PersistenceSettings)
     drafting: DraftingSettings = Field(default_factory=DraftingSettings)
     writer_llm: LlmSettings | None = None
 

@@ -10,27 +10,27 @@ store it in the app's storage.
 
 ```mermaid
 sequenceDiagram
-   autonumber
-   actor User
-   participant Drafter as DraftService
-   participant Writer as DraftWriter
-   participant DB as SqliteArchive
-   Note over User, DB: Draft Post Operation
-   User ->> Drafter: draft("idea")
-   activate Drafter
-   Note over Drafter: Build DraftRequest
-   Drafter ->> Writer: write(DraftRequest)
-   activate Writer
-   Note over Writer: Process DraftRequest into a Draft
-   Writer ->> Drafter: Draft
-   deactivate Writer
-   Note over Drafter: Transform Draft to a Post
-   Drafter ->> DB: save(Post)
-   activate DB
-   Note over DB: Store Post
-   deactivate DB
-   Drafter -->> User: Post
-   deactivate Drafter
+    autonumber
+    actor User
+    participant Drafter as DraftService
+    participant Writer as DraftWriter
+    participant DB as SqlitePostStorage
+    Note over User, DB: Draft Post Operation
+    User ->> Drafter: draft("idea")
+    activate Drafter
+    Note over Drafter: Build DraftRequest
+    Drafter ->> Writer: write(DraftRequest)
+    activate Writer
+    Note over Writer: Process DraftRequest into a Draft
+    Writer ->> Drafter: Draft
+    deactivate Writer
+    Note over Drafter: Transform Draft to a Post
+    Drafter ->> DB: save(Post)
+    activate DB
+    Note over DB: Store Post
+    deactivate DB
+    Drafter -->> User: Post
+    deactivate Drafter
 
 ```
 
@@ -52,4 +52,4 @@ The `DraftService` class, which orchestrate the drafting process of a `Post` fro
       `DraftWriter` contract.
 2. [Post](../domain/post.py) (from domain): the core entity across the application, created by the drafting process and
    stored in via the persistence layer.
-3. [SqliteArchive](../archive/sqlite_archive.py) (from archive): the application's persistence layer.
+3. [SqlitePostStorage](../persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.
