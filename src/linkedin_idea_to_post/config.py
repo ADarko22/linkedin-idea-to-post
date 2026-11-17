@@ -14,6 +14,15 @@ class PersistenceSettings(BaseModel):
     db_path: Path | str = Field(default="./data/persistence.db")
 
 
+class EmbeddingSettings(BaseModel):
+    # Some of possible models: BAAI/bge-large-en-v1.5, all-MiniLM-L6-v2
+    model_name: str = Field(default="BAAI/bge-large-en-v1.5")
+    local_model_path: Path = Field(default=Path("./data/models/all-MiniLM-L6-v2"))
+    # device represents the hardware execution device.
+    # PyTorch supports "cpu" (universal CPUs), "cuda" (NVIDIA GPU), "mps" (Apple Silicon integrated GPU)
+    device: str = "cpu"
+
+
 class DraftingSettings(BaseModel):
     voice_examples_count: int = Field(default=3)
 
@@ -31,6 +40,7 @@ class LlmSettings(BaseModel):
 class AppConfig(BaseSettings):
     storage: PersistenceSettings = Field(default_factory=PersistenceSettings)
     drafting: DraftingSettings = Field(default_factory=DraftingSettings)
+    embedding: EmbeddingSettings = Field(default=EmbeddingSettings())
     writer_llm: LlmSettings | None = None
 
     model_config = SettingsConfigDict(

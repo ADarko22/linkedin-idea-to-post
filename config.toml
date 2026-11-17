@@ -6,6 +6,11 @@ db_path = "./data/archive.db"
 [drafting]
 voice_examples_count = 3
 
+[embedding]
+model_name = "BAAI/bge-large-en-v1.5"
+local_model_path = "./data/models/bge-large-en-v1.5"
+device = "mps" # "cpu" (universal), "cuda" (windows/linux NVIDIA GPU), or "mps" (Apple Silicon)
+
 [writer_llm]
 model = "gemini/gemini-3.5-flash-lite"
 temperature = 0.6       # higher temperature for creative writing

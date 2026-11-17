@@ -8,6 +8,9 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from linkedin_idea_to_post.adapters.embedding.embedding_generator import (
+    PyTorchEmbeddingGenerator,
+)
 from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
     SqlitePostRetriever,
@@ -15,7 +18,7 @@ from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
     SqlitePostStorage,
 )
-from linkedin_idea_to_post.config import PersistenceSettings
+from linkedin_idea_to_post.config import EmbeddingSettings, PersistenceSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.retrieval import PostRetriever
 from linkedin_idea_to_post.domain.storage import PostStorage
@@ -102,3 +105,14 @@ def in_memory_storage(in_memory_db_connection: sqlite3.Connection) -> PostStorag
 @pytest.fixture
 def in_memory_retriever(in_memory_db_connection: sqlite3.Connection) -> PostRetriever:
     return SqlitePostRetriever(in_memory_db_connection)
+
+
+@pytest.fixture(scope="session")
+def embedding_generator() -> PyTorchEmbeddingGenerator:
+    # Use a lightweight model for fast testing
+    settings = EmbeddingSettings(
+        model_name="all-MiniLM-L6-v2",
+        local_model_path=Path("./data/models/all-MiniLM-L6-v2"),
+        device="cpu",
+    )
+    return PyTorchEmbeddingGenerator(settings)

@@ -45,3 +45,12 @@ semantic/vector searches.
 | Method                              | Input                                                                                      | Output       | Description                                        |
 |-------------------------------------|--------------------------------------------------------------------------------------------|--------------|----------------------------------------------------|
 | `full_text_search(PostSearchQuery)` | `PostSearchQuery`, specifying search text, the status and origin filters, and max results. | `list[Post]` | Retrieves posts based on FTS5 and BM25 algorithms. |
+
+### 5. [embedding.py](embedding.py)
+
+Defines the `EmbeddingGenerator` protocol for building embedding vectors from `Post` objects, to be used for semantic
+search.
+
+| Method           | Input  | Output        | Description                                           |
+|------------------|--------|---------------|-------------------------------------------------------|
+| `generate(Post)` | `Post` | `list[float]` | A dense vector embeddings for a single `Post` object. |
