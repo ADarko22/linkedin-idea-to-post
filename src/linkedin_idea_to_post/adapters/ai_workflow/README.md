@@ -45,7 +45,7 @@ The writer receives an LLM instance through its constructor and passes it to the
 
 #### The [llm_factory.py](llm_factory.py)
 
-The `build_llm` factory method builds a `BaseLLM` based on the `LlmSettings` from [config.py](../config.py).
+The `build_llm` factory method builds a `BaseLLM` based on the `LlmSettings` from [config.py](../../config.py).
 A custom `PromptEchoLLM` class, which extends `BaseLLM`, is provided as an 'offline' option, useful for development and
 debugging what prompts would be sent to an 'online' LLM.
 
@@ -66,8 +66,8 @@ The crew configuration is loaded from YAML files:
 
 ### External Boundaries
 
-1. [DraftWriter](../domain/drafting.py) (from domain): the contract for generating a `Draft` from a `DraftRequest`.
-2. [DraftRequest](../domain/drafting.py) and [Draft](../domain/drafting.py) (from domain): the input and output models
+1. [DraftWriter](../../domain/drafting.py) (from domain): the contract for generating a `Draft` from a `DraftRequest`.
+2. [DraftRequest](../../domain/drafting.py) and [Draft](../../domain/drafting.py) (from domain): the input and output models
    defining the boundary of the drafting workflow.
 3. **CrewAI:** the framework used to define agents, tasks, and their execution.
 4. **LLM:** injected into `CrewaiDraftWriter` and passed to the `WriterCrew` to power the writing agent.

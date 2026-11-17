@@ -1,7 +1,7 @@
 import csv
 from enum import StrEnum
 
-from linkedin_idea_to_post.linkedin.model import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     CsvParserResult,
     CsvParsingError,
     ParsingErrorCode,

@@ -3,11 +3,13 @@ from uuid import UUID
 
 import pytest
 
+from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
+    SqlitePostStorage,
+)
 from linkedin_idea_to_post.config import PersistenceSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.persistence.database import create_sqlite_connection
-from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 
 def test_get_unknown_post_id_returns_none(in_memory_storage, sample_post) -> None:

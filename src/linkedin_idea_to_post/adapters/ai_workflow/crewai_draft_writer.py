@@ -2,8 +2,10 @@ from typing import cast
 
 from crewai import CrewOutput
 
-from linkedin_idea_to_post.ai_workflow.prompt_helpers import format_voice_examples
-from linkedin_idea_to_post.ai_workflow.writer_crew import WriterCrew
+from linkedin_idea_to_post.adapters.ai_workflow.prompt_helpers import (
+    format_voice_examples,
+)
+from linkedin_idea_to_post.adapters.ai_workflow.writer_crew import WriterCrew
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
 
 

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from linkedin_idea_to_post.config import DraftingSettings
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.drafting.draft_service import DraftService
+from linkedin_idea_to_post.use_case.drafting.draft_service import DraftService
 from tests.fake_draft_writer import FakeDraftWriter
 
 

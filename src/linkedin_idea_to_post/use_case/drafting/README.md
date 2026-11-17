@@ -46,10 +46,10 @@ The `DraftService` class, which orchestrate the drafting process of a `Post` fro
 
 ### External Boundaries
 
-1. [DraftWriter](../domain/drafting.py) (from domain): the contract for the drafting logic, which transforms an 'idea'
+1. [DraftWriter](../../domain/drafting.py) (from domain): the contract for the drafting logic, which transforms an 'idea'
    into a `Post`.
-    - [CrewaiDraftWriter](../ai_workflow/crewai_draft_writer.py) (from ai_workflow): the agentic implementation of
+    - [CrewaiDraftWriter](../../adapters/ai_workflow/crewai_draft_writer.py) (from ai_workflow): the agentic implementation of
       `DraftWriter` contract.
-2. [Post](../domain/post.py) (from domain): the core entity across the application, created by the drafting process and
+2. [Post](../../domain/post.py) (from domain): the core entity across the application, created by the drafting process and
    stored in via the persistence layer.
-3. [SqlitePostStorage](../persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.
+3. [SqlitePostStorage](../../adapters/persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.

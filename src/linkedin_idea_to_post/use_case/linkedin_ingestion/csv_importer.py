@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from linkedin_idea_to_post.domain.storage import PostStorage
-from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
-from linkedin_idea_to_post.linkedin.mapper import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
+from linkedin_idea_to_post.use_case.linkedin_ingestion.mapper import (
     raw_post_to_post,
 )
-from linkedin_idea_to_post.linkedin.model import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     CsvImporterCommitResult,
     CsvImporterPrepareResult,
     CsvMappingError,

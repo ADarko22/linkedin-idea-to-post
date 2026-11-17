@@ -2,7 +2,10 @@ import pytest
 from crewai import BaseLLM
 from pydantic import SecretStr
 
-from linkedin_idea_to_post.ai_workflow.llm_factory import PromptEchoLLM, build_llm
+from linkedin_idea_to_post.adapters.ai_workflow.llm_factory import (
+    PromptEchoLLM,
+    build_llm,
+)
 from linkedin_idea_to_post.config import ConfigurationError, LlmSettings
 
 

@@ -44,7 +44,7 @@ The data models used throughout CSV parsing and importing process.
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `RawPost`           | Represents a raw post extracted from LinkedIn's `Shares.csv` file, downloaded from [LinkedIn's data export page](https://www.linkedin.com/mypreferences/d/download-my-data).                               |
 | `CsvParserResult`   | Represents the CSV parsing result, containing a list of `RawPost` objects and a list of `CsvParsingError` objects (structured parsing errors propagated to the user).                                      |
-| `CsvImporterResult` | Defines the contract across the importing boundary, containing a list of `Post` objects from the [domain](../domain) module, a list of `CsvParsingError` objects, and a list of `CsvMappingError` objects. |
+| `CsvImporterResult` | Defines the contract across the importing boundary, containing a list of `Post` objects from the [domain](../../domain) module, a list of `CsvParsingError` objects, and a list of `CsvMappingError` objects. |
 
 ### The [CsvImporter](csv_importer.py)
 
@@ -65,6 +65,6 @@ The `CsvParser` class, responsible for reading and parsing the `Shares.csv` file
 
 ### External Boundaries
 
-1. [Post](../domain/post.py) (from domain): the core entity across the application, created by the import process and
+1. [Post](../../domain/post.py) (from domain): the core entity across the application, created by the import process and
    stored in via the persistence layer.
-2. [SqlitePostStorage](../persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.
+2. [SqlitePostStorage](../../adapters/persistence/sqlite_post_storage.py) (from persistence): the application's persistence layer.

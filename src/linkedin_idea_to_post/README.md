@@ -66,7 +66,7 @@ _Note: visualize it on  [mermaid.ai](https://mermaid.ai/live) if the Markdown re
 
 ### Drafting a post from an idea
 
-Prompting the "idea" message to the [`DraftService`](drafting/draft_service.py) to generate a draft of a LinkedIn [
+Prompting the "idea" message to the [`DraftService`](use_case/drafting/draft_service.py) to generate a draft of a LinkedIn [
 `Post`](domain/post.py).
 
 ```mermaid

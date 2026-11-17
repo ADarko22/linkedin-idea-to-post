@@ -1,8 +1,10 @@
 import pytest
 
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
+    SqlitePostStorage,
+)
 from linkedin_idea_to_post.domain.post import PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
 
 
 def test_build_get_all_with_filter_query_on_pagination():

@@ -2,14 +2,14 @@ import re
 
 import pytest
 
-from linkedin_idea_to_post.linkedin.mapper import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.mapper import (
     ErrorCollector,
     extract_post_uuid,
     extract_sanitized_body,
     extract_utc_datetime,
     raw_post_to_post,
 )
-from linkedin_idea_to_post.linkedin.model import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     FieldError,
     MappingErrorCode,
     MappingFailure,

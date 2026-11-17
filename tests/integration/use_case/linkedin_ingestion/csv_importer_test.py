@@ -1,7 +1,7 @@
 # todo integration test with CsvParser to test the prepare returns a CsvImporterResult both with posts and errors
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
-from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
+from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_importer import CsvImporter
+from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
 
 
 def test_prepare_and_commit_persists_valid_posts(

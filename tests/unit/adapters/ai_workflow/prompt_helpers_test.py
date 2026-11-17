@@ -1,4 +1,6 @@
-from linkedin_idea_to_post.ai_workflow.prompt_helpers import format_voice_examples
+from linkedin_idea_to_post.adapters.ai_workflow.prompt_helpers import (
+    format_voice_examples,
+)
 
 
 def test_format_voice_examples_with_no_examples() -> None:

@@ -1,6 +1,8 @@
 import pytest
 
-from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
+from linkedin_idea_to_post.adapters.ai_workflow.crewai_draft_writer import (
+    CrewaiDraftWriter,
+)
 from linkedin_idea_to_post.domain.drafting import DraftRequest
 from tests.fake_llm import FakeLLM
 

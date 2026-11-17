@@ -7,16 +7,22 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from linkedin_idea_to_post.ai_workflow.crewai_draft_writer import CrewaiDraftWriter
-from linkedin_idea_to_post.ai_workflow.llm_factory import build_llm
+from linkedin_idea_to_post.adapters.ai_workflow.crewai_draft_writer import (
+    CrewaiDraftWriter,
+)
+from linkedin_idea_to_post.adapters.ai_workflow.llm_factory import build_llm
+from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
+    SqlitePostRetriever,
+)
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
+    SqlitePostStorage,
+)
 from linkedin_idea_to_post.config import AppConfig, ConfigurationError
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.drafting.draft_service import DraftService
-from linkedin_idea_to_post.linkedin.csv_importer import CsvImporter
-from linkedin_idea_to_post.linkedin.csv_parser import CsvParser
-from linkedin_idea_to_post.persistence.database import create_sqlite_connection
-from linkedin_idea_to_post.persistence.sqlite_post_retrieval import SqlitePostRetriever
-from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
+from linkedin_idea_to_post.use_case.drafting.draft_service import DraftService
+from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_importer import CsvImporter
+from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
 
 console = Console()
 

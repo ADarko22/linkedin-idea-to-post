@@ -8,14 +8,18 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
+    SqlitePostRetriever,
+)
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
+    SqlitePostStorage,
+)
 from linkedin_idea_to_post.config import PersistenceSettings
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.retrieval import PostRetriever
 from linkedin_idea_to_post.domain.storage import PostStorage
-from linkedin_idea_to_post.linkedin.model import RawPost
-from linkedin_idea_to_post.persistence.database import create_sqlite_connection
-from linkedin_idea_to_post.persistence.sqlite_post_retrieval import SqlitePostRetriever
-from linkedin_idea_to_post.persistence.sqlite_post_storage import SqlitePostStorage
+from linkedin_idea_to_post.use_case.linkedin_ingestion.model import RawPost
 
 
 @pytest.fixture

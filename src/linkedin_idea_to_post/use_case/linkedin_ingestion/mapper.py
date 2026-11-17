@@ -7,7 +7,7 @@ from typing import ParamSpec, TypeVar
 
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
-from linkedin_idea_to_post.linkedin.model import (
+from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     FieldError,
     MappingErrorCode,
     MappingFailure,

@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from linkedin_idea_to_post.persistence.sqlite_post_retrieval import (
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
     _prepare_fts_expression,
 )
 
