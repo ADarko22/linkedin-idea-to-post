@@ -1,6 +1,6 @@
 import pytest
 
-from linkedin_idea_to_post.adapters.embedding.math_helpers import cosine_similarity
+from linkedin_idea_to_post.adapters.helpers.math import cosine_similarity
 
 
 @pytest.mark.integration
@@ -12,9 +12,9 @@ def test_embedding_semantic_sanity(embedding_generator, post_factory):
     post_baking = post_factory(body="Fermentation times and flour hydration ratios.")
 
     # Build embeddings
-    post_java_embedding = embedding_generator.generate(post_java)
-    post_kotlin_embedding = embedding_generator.generate(post_kotlin)
-    post_baking_embedding = embedding_generator.generate(post_baking)
+    post_java_embedding = embedding_generator.generate(post_java).vector
+    post_kotlin_embedding = embedding_generator.generate(post_kotlin).vector
+    post_baking_embedding = embedding_generator.generate(post_baking).vector
 
     # Compute cosine similarities: A * B / |A| * |B|
     post_java_kotlin_similarity = cosine_similarity(

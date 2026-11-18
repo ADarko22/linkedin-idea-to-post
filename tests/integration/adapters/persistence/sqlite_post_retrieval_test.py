@@ -1,7 +1,11 @@
 import pytest
 
+from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
 from linkedin_idea_to_post.domain.post import Post
-from linkedin_idea_to_post.domain.retrieval import PostSearchQuery
+from linkedin_idea_to_post.domain.retrieval import (
+    FullTextPostSearchQuery,
+    VectorPostSearchQuery,
+)
 
 
 @pytest.fixture
@@ -21,7 +25,7 @@ def seeded_posts(post_factory, in_memory_storage) -> tuple[Post, Post]:
     return post1, post2
 
 
-# --- Retrieval & Ranking Behavior ---
+# --- Full Text Search Retrieval & Ranking Behavior ---
 
 
 @pytest.mark.parametrize(
@@ -34,17 +38,17 @@ def seeded_posts(post_factory, in_memory_storage) -> tuple[Post, Post]:
 def test_full_text_search_ranks_most_relevant_post_first(
     seeded_posts, in_memory_retriever, query_text: str, expected_first_index: int
 ) -> None:
-    query = PostSearchQuery(text=query_text, limit=2)
+    query = FullTextPostSearchQuery(search_text=query_text, limit=2)
     relevant_posts = in_memory_retriever.full_text_search(query)
 
     assert len(relevant_posts) == 2
-    assert relevant_posts[0] == seeded_posts[expected_first_index]
+    assert relevant_posts[0].post == seeded_posts[expected_first_index]
 
 
 def test_full_text_search_retrieves_nothing_when_no_terms_match(
     seeded_posts, in_memory_retriever
 ) -> None:
-    query = PostSearchQuery(text="Idea matching no words..", limit=2)
+    query = FullTextPostSearchQuery(search_text="Idea matching no words..", limit=2)
     assert in_memory_retriever.full_text_search(query) == []
 
 
@@ -62,10 +66,10 @@ def test_insert_trigger_indexes_topics_via_json_each(
     )
     in_memory_storage.save(post)
 
-    results = in_memory_retriever.full_text_search(
-        PostSearchQuery(text="observability")
+    scored_posts = in_memory_retriever.full_text_search(
+        FullTextPostSearchQuery(search_text="observability")
     )
-    assert results == [post]
+    assert scored_posts[0].post == post
 
 
 def test_update_trigger_purges_old_terms_and_indexes_new_terms(
@@ -78,9 +82,10 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
         topics={"java", "monolith"},
     )
     in_memory_storage.save(post)
-    assert in_memory_retriever.full_text_search(PostSearchQuery(text="Monolith")) == [
-        post
-    ]
+    scored_posts = in_memory_retriever.full_text_search(
+        FullTextPostSearchQuery(search_text="Monolith")
+    )
+    assert scored_posts[0].post == post
 
     updated_post = post.model_copy(
         update={
@@ -92,13 +97,24 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
     in_memory_storage.save(updated_post)
 
     # Stale terms must be purged from the inverted index
-    assert in_memory_retriever.full_text_search(PostSearchQuery(text="Monolith")) == []
-    assert in_memory_retriever.full_text_search(PostSearchQuery(text="Java")) == []
+    assert (
+        in_memory_retriever.full_text_search(
+            FullTextPostSearchQuery(search_text="Monolith")
+        )
+        == []
+    )
+    assert (
+        in_memory_retriever.full_text_search(
+            FullTextPostSearchQuery(search_text="Java")
+        )
+        == []
+    )
 
     # New terms must be searchable
-    assert in_memory_retriever.full_text_search(
-        PostSearchQuery(text="Apache Kafka")
-    ) == [updated_post]
+    scored_posts = in_memory_retriever.full_text_search(
+        FullTextPostSearchQuery(search_text="Apache Kafka")
+    )
+    assert scored_posts[0].post == updated_post
 
 
 def test_delete_trigger_removes_document_from_index(
@@ -111,10 +127,63 @@ def test_delete_trigger_removes_document_from_index(
         topics={"terraform"},
     )
     in_memory_storage.save(post)
-    assert in_memory_retriever.full_text_search(PostSearchQuery(text="Terraform")) == [
-        post
-    ]
+    scored_posts = in_memory_retriever.full_text_search(
+        FullTextPostSearchQuery(search_text="Terraform")
+    )
+    assert scored_posts[0].post == post
 
     in_memory_storage.delete(post.id)
 
-    assert in_memory_retriever.full_text_search(PostSearchQuery(text="Terraform")) == []
+    assert (
+        in_memory_retriever.full_text_search(
+            FullTextPostSearchQuery(search_text="Terraform")
+        )
+        == []
+    )
+
+
+# --- Semantic Search Retrieval & Ranking Behavior ---
+
+
+@pytest.mark.parametrize(
+    ("query_text", "expected_first_index"),
+    [
+        ("Healthy life, good food, and staying active.", 0),
+        ("Finding fulfillment and happiness at work.", 1),
+    ],
+)
+def test_semantic_search_ranks_most_similar_post_first(
+    seeded_posts: tuple[Post, Post],
+    embedding_generator: EmbeddingGenerator,
+    in_memory_storage,
+    in_memory_embedding_storage,
+    in_memory_retriever,
+    in_memory_db_connection,
+    query_text: str,
+    expected_first_index: int,
+) -> None:
+    post1, post2 = seeded_posts
+    emb1 = embedding_generator.generate(post1)
+    emb2 = embedding_generator.generate(post2)
+
+    with in_memory_db_connection:
+        in_memory_storage.save(post1)
+        in_memory_storage.save(post2)
+        in_memory_embedding_storage.save(emb1)
+        in_memory_embedding_storage.save(emb2)
+
+    query_embedding = embedding_generator.generate(
+        post1.model_copy(update={"title": query_text, "body": query_text})
+    )
+    query = VectorPostSearchQuery(
+        embedding_vector=query_embedding.vector,
+        embedding_model=query_embedding.embedding_model,
+        dimensions=query_embedding.dimensions,
+        limit=2,
+    )
+
+    results = in_memory_retriever.semantic_search(query)
+
+    assert len(results) == 2
+    assert results[0].post == seeded_posts[expected_first_index]
+    assert results[0].score >= results[1].score

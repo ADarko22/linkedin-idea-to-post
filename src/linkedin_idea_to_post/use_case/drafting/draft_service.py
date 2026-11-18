@@ -4,9 +4,12 @@ from datetime import UTC, datetime
 
 from linkedin_idea_to_post.config import DraftingSettings
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
-from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus, ScoredPost
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
-from linkedin_idea_to_post.domain.retrieval import PostRetriever, PostSearchQuery
+from linkedin_idea_to_post.domain.retrieval import (
+    FullTextPostSearchQuery,
+    PostRetriever,
+)
 from linkedin_idea_to_post.domain.storage import PostStorage
 
 
@@ -28,7 +31,7 @@ class DraftService:
     def compose(self, idea: str) -> Draft:
         voice_example_posts = self._find_voice_examples(idea)
 
-        voice_examples = [post.body for post in voice_example_posts]
+        voice_examples = [scored_post.post.body for scored_post in voice_example_posts]
         draft_request = DraftRequest(idea=idea, voice_examples=voice_examples)
         return self.writer.write(draft_request)
 
@@ -56,9 +59,9 @@ class DraftService:
 
         return draft_post
 
-    def _find_voice_examples(self, idea: str) -> list[Post]:
-        query = PostSearchQuery(
-            text=idea,
+    def _find_voice_examples(self, idea: str) -> list[ScoredPost]:
+        query = FullTextPostSearchQuery(
+            search_text=idea,
             origins=[PostOrigin.HUMAN],
             statuses=[PostStatus.PUBLISHED],
             limit=self.settings.voice_examples_count,

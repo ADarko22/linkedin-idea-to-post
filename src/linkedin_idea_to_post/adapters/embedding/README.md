@@ -15,14 +15,13 @@ applies pooling to collapse variable-length text into a single fixed-size dense 
 
 ##### Embedding Models
 
-- ** Default:** Configured in [config.py](../../config.py)
+- **Default:** Configured in [config.py](../../config.py)
   using [BAAI/bge-large-en-v1.5](https://huggingface.co/BAAI/bge-large-en-v1.5), which produces **1024-dimensional**
   vectors.
 - **Testing:** Configured in [conftest.py](../../../../tests/conftest.py)
   using [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), which
   produces **384-dimensional** vectors for fast, lightweight testing.
 
-### 2. [math_helpers.py](math_helpers.py)
-
-Provides vector math utilities, such as [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity) computed
-via NumPy (`np.dot`, `np.linalg.norm`) with floating-point tolerance assertions (`np.isclose`).
+_In order to generate embeddings for larger posts or using smaller models, chunking the input text and collecting
+multiple embeddings can be done by adding the **[chonkie](https://github.com/feyninc/chonkie) library** (to explore in
+case of scaling need)._

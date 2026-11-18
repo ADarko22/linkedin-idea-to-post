@@ -60,6 +60,18 @@ _SCHEMA_SQL = """
             (SELECT group_concat(value, ' ') FROM json_each(NEW.doc, '$.topics'))
         );
     END;
+
+
+    -- 4. Post Embedding Vectors for Semantic Search Index
+    CREATE TABLE IF NOT EXISTS post_embeddings (
+        post_id TEXT PRIMARY KEY,
+        model_name TEXT NOT NULL,
+        dimensions INT NOT NULL,
+        vector BLOB NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL,
+        FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+    );
 """
 
 

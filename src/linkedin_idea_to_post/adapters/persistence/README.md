@@ -10,6 +10,14 @@ The `SqlitePostStorage` implements `PostGetQuery` using SQLite to perform CRUD o
 
 Each post is stored as a complete JSON document, keyed by its post ID, into the `posts` table.
 
+### [sqlite_post_embedding_storage.py](sqlite_post_embedding_storage.py)
+
+The `SQLitePostEmbeddingStorage` implements `PostEmbeddingStorage` using SQLite to perform CRUD operations on
+`PostEmbedding` objects.
+
+Each embedding is stored with metadata about the embedding model, and keyed by the referenced post ID, into the
+`posts_embeddings` table.
+
 ### [SqlitePostRetriever](sqlite_post_retrieval.py)
 
 The `SqlitePostRetriever` implements `PostSearchQuery` using SQLite to retrieve `Post` objects by Full-Text Search and
@@ -54,6 +62,26 @@ indexes, because `posts` stores the `Post` objects as a JSON document. Full-Text
 
 _Use [Shadow Tables &`fts5vocab`](https://sqlite.org/fts5.html#the_fts5vocab_virtual_table_module) to inspect the
 underlying inverted index vocabulary and term frequencies._
+
+#### Cosine Similarity Score on Embeddings for Semantic Search
+
+Using [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity) on all the vector embeddings, for the posts
+matching the search criteria, for computing the similarity score with the search embedding and returning the top scored
+posts.
+
+The **cosine similarity** is computed using a Matrix to Vector product with [numpy](https://github.com/numpy):
+
+- Each of the N post embedding vectors is converted to a numpy.ndarray of D `float32`.
+- These arrays are stacked to form a 2D array of `NxD`.
+- Cosine Similarity is computed as: `M * V / (|M| * |V|)`. Where M is `NxD`, V is `Dx1`, and the denominator is product
+  of the respective [Euclidean Norm](https://en.wikipedia.org/wiki/Norm_(mathematics)).
+    - Before performing the multiplications `M` is filtered to remove the rows having Euclidean Norm equals to zero.
+    - The resulting `Nx1` array contains the scores of each post embedding w.r.t. the search embedding.
+- These scores are sorted in descending order and their sorted indexes are used to identify the best matching posts.
+
+### [sql_builders.py](sql_builders.py)
+
+Pure functions for building the search queries with advanced filtering.
 
 ## Design considerations
 

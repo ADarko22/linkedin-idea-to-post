@@ -3,7 +3,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.post import (
+    Post,
+    PostEmbedding,
+    PostOrigin,
+    PostStatus,
+)
 
 DEFAULT_PAGE_SIZE = 50
 
@@ -23,3 +28,11 @@ class PostStorage(Protocol):
     def get(self, post_id: UUID) -> Post | None: ...
 
     def get_all(self, query: PostGetQuery) -> list[Post]: ...
+
+
+class PostEmbeddingStorage(Protocol):
+    def save(self, post_embedding: PostEmbedding) -> None: ...
+
+    def delete(self, post_id: UUID) -> None: ...
+
+    def get(self, post_id: UUID) -> PostEmbedding | None: ...

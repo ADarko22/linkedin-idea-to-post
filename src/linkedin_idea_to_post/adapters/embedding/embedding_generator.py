@@ -1,3 +1,5 @@
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -5,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 
 from linkedin_idea_to_post.config import EmbeddingSettings
 from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
-from linkedin_idea_to_post.domain.post import Post
+from linkedin_idea_to_post.domain.post import Post, PostEmbedding
 
 
 def _retrieve_embedding_model(embedding_settings: EmbeddingSettings) -> str | Path:
@@ -29,13 +31,29 @@ def _retrieve_embedding_model(embedding_settings: EmbeddingSettings) -> str | Pa
 
 
 class PyTorchEmbeddingGenerator(EmbeddingGenerator):
-    def __init__(self, embedding_settings: EmbeddingSettings) -> None:
+    def __init__(
+        self,
+        embedding_settings: EmbeddingSettings,
+        timestamp_provider: Callable[[], datetime] = lambda: datetime.now(UTC),
+    ) -> None:
         embedding_model = _retrieve_embedding_model(embedding_settings)
-        self.sentence_transformer = SentenceTransformer(
+        self._sentence_transformer = SentenceTransformer(
             model_name_or_path=embedding_model,
             device=embedding_settings.device,
         )
+        self._embedding_settings = embedding_settings
+        self._timestamp_provider = timestamp_provider
 
-    def generate(self, post: Post) -> np.ndarray:
+    def generate(self, post: Post) -> PostEmbedding:
         # embedding only post body (title and topics are metadata extracted from the body)
-        return self.sentence_transformer.encode(post.body, convert_to_numpy=True)
+        embeddings = self._sentence_transformer.encode(post.body, convert_to_numpy=True)
+        embedding_vector = np.asarray(embeddings, dtype=np.float32).tolist()
+        now = self._timestamp_provider()
+        return PostEmbedding(
+            post_id=post.id,
+            embedding_model=self._embedding_settings.model_name,
+            dimensions=len(embedding_vector),
+            vector=embedding_vector,
+            created_at=now,
+            updated_at=now,
+        )

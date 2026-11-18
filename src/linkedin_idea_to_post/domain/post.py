@@ -5,6 +5,17 @@ from uuid import UUID
 from pydantic import AwareDatetime, BaseModel, field_validator
 
 
+class UtcAwareBaseModel(BaseModel):
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
+
+    @field_validator("created_at", "updated_at", mode="after")
+    @classmethod
+    def convert_all_to_utc(cls, value: datetime) -> datetime:
+        # This runs sequentially for each field listed above
+        return value.astimezone(UTC)
+
+
 class PostStatus(StrEnum):
     DRAFT = "DRAFT"
     PUBLISHED = "PUBLISHED"
@@ -16,7 +27,7 @@ class PostOrigin(StrEnum):
     AI_EDIT = "AI_EDIT"
 
 
-class Post(BaseModel):
+class Post(UtcAwareBaseModel):
     id: UUID
     url: str | None
     title: str
@@ -24,16 +35,15 @@ class Post(BaseModel):
     topics: set[str]
     origin: PostOrigin
     status: PostStatus
-    created_at: AwareDatetime
-    updated_at: AwareDatetime
 
-    @field_validator("created_at", "updated_at", mode="after")
-    @classmethod
-    def convert_all_to_utc(cls, value: datetime) -> datetime:
-        # This runs sequentially for each field listed above
-        return value.astimezone(UTC)
 
-    # todo add a distinction of urls:
-    #  - urn:li:share ->  legacy and simple share object: typically light updates on personal profile
-    #  - urn:li:ugcPost -> user-generated-content, modern POST API: typically rich media & company posts
-    #  REGEX to extract them re.compile(r"(?::|%3A)([a-zA-Z]+)(?::|%3A)")
+class PostEmbedding(UtcAwareBaseModel):
+    post_id: UUID
+    embedding_model: str
+    dimensions: int
+    vector: list[float]
+
+
+class ScoredPost(BaseModel):
+    post: Post
+    score: float

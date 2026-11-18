@@ -12,6 +12,9 @@ from linkedin_idea_to_post.adapters.embedding.embedding_generator import (
     PyTorchEmbeddingGenerator,
 )
 from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_embedding_storage import (
+    SQLitePostEmbeddingStorage,
+)
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
     SqlitePostRetriever,
 )
@@ -19,12 +22,30 @@ from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
     SqlitePostStorage,
 )
 from linkedin_idea_to_post.config import EmbeddingSettings, PersistenceSettings
-from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
+from linkedin_idea_to_post.domain.post import (
+    Post,
+    PostEmbedding,
+    PostOrigin,
+    PostStatus,
+)
 from linkedin_idea_to_post.domain.retrieval import PostRetriever
-from linkedin_idea_to_post.domain.storage import PostStorage
+from linkedin_idea_to_post.domain.storage import PostEmbeddingStorage, PostStorage
 from linkedin_idea_to_post.use_case.linkedin_ingestion.model import RawPost
 
 
+####################################################################################
+# Persistence
+# In-Memory DB Connection being shared by in_memory_storage and in_memory_retriever
+@pytest.fixture
+def in_memory_db_connection() -> Iterator[sqlite3.Connection]:
+    settings = PersistenceSettings(db_path=":memory:")
+    conn = create_sqlite_connection(settings)
+    yield conn
+    conn.close()
+
+
+####################################################################################
+# Raw Post
 @pytest.fixture
 def sample_raw_post() -> RawPost:
     return RawPost(
@@ -44,6 +65,8 @@ def raw_post_factory(sample_raw_post: RawPost) -> Callable[..., RawPost]:
     return make
 
 
+####################################################################################
+# Post
 @pytest.fixture
 def sample_post() -> Post:
     return Post(
@@ -88,15 +111,6 @@ def create_csv_post_file(tmp_path: Path) -> CSVFactory:
     return _create_file
 
 
-# In-Memory DB Connection being shared by in_memory_storage and in_memory_retriever
-@pytest.fixture
-def in_memory_db_connection() -> Iterator[sqlite3.Connection]:
-    settings = PersistenceSettings(db_path=":memory:")
-    conn = create_sqlite_connection(settings)
-    yield conn
-    conn.close()
-
-
 @pytest.fixture
 def in_memory_storage(in_memory_db_connection: sqlite3.Connection) -> PostStorage:
     return SqlitePostStorage(in_memory_db_connection)
@@ -107,6 +121,8 @@ def in_memory_retriever(in_memory_db_connection: sqlite3.Connection) -> PostRetr
     return SqlitePostRetriever(in_memory_db_connection)
 
 
+####################################################################################
+# Post Embedding
 @pytest.fixture(scope="session")
 def embedding_generator() -> PyTorchEmbeddingGenerator:
     # Use a lightweight model for fast testing
@@ -116,3 +132,30 @@ def embedding_generator() -> PyTorchEmbeddingGenerator:
         device="cpu",
     )
     return PyTorchEmbeddingGenerator(settings)
+
+
+@pytest.fixture
+def sample_embedding() -> PostEmbedding:
+    return PostEmbedding(
+        post_id=UUID("9266cfeb-93f8-5593-823a-f6b81f3f6d75"),
+        embedding_model="test_model",
+        vector=[1.0, 1.0],
+        dimensions=2,
+        created_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
+        updated_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
+    )
+
+
+@pytest.fixture
+def embedding_factory(sample_embedding: PostEmbedding) -> Callable[..., PostEmbedding]:
+    def make(**overrides: Any) -> PostEmbedding:
+        return sample_embedding.model_copy(update={"post_id": uuid4(), **overrides})
+
+    return make
+
+
+@pytest.fixture
+def in_memory_embedding_storage(
+    in_memory_db_connection: sqlite3.Connection,
+) -> PostEmbeddingStorage:
+    return SQLitePostEmbeddingStorage(in_memory_db_connection)
