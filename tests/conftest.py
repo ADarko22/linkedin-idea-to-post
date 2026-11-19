@@ -21,7 +21,11 @@ from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
     SqlitePostStorage,
 )
+from linkedin_idea_to_post.adapters.persistence.sqllite_unit_of_work import (
+    SqliteUnitOfWork,
+)
 from linkedin_idea_to_post.config import EmbeddingSettings, PersistenceSettings
+from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
 from linkedin_idea_to_post.domain.post import (
     Post,
     PostEmbedding,
@@ -31,6 +35,9 @@ from linkedin_idea_to_post.domain.post import (
 from linkedin_idea_to_post.domain.retrieval import PostRetriever
 from linkedin_idea_to_post.domain.storage import PostEmbeddingStorage, PostStorage
 from linkedin_idea_to_post.use_case.linkedin_ingestion.model import RawPost
+from linkedin_idea_to_post.use_case.post_management.post_write_management_service import (
+    UnitOfWork,
+)
 
 
 ####################################################################################
@@ -124,7 +131,7 @@ def in_memory_retriever(in_memory_db_connection: sqlite3.Connection) -> PostRetr
 ####################################################################################
 # Post Embedding
 @pytest.fixture(scope="session")
-def embedding_generator() -> PyTorchEmbeddingGenerator:
+def embedding_generator() -> EmbeddingGenerator:
     # Use a lightweight model for fast testing
     settings = EmbeddingSettings(
         model_name="all-MiniLM-L6-v2",
@@ -159,3 +166,52 @@ def in_memory_embedding_storage(
     in_memory_db_connection: sqlite3.Connection,
 ) -> PostEmbeddingStorage:
     return SQLitePostEmbeddingStorage(in_memory_db_connection)
+
+
+class FailingPostEmbeddingStorage:
+    """Test double that fails on save() or delete() to verify atomic transaction rollback."""
+
+    def __init__(self, error: BaseException | None = None) -> None:
+        self._error = error or RuntimeError("Simulated embedding persistence failure")
+        self.save_calls: list[PostEmbedding] = []
+        self.delete_calls: list[UUID] = []
+
+    def save(self, post_embedding: PostEmbedding) -> None:
+        self.save_calls.append(post_embedding)
+        raise self._error
+
+    def delete(self, post_id: UUID) -> None:
+        self.delete_calls.append(post_id)
+        raise self._error
+
+    def get(self, post_id: UUID) -> PostEmbedding | None:
+        raise NotImplementedError
+
+
+@pytest.fixture
+def failing_embedding_storage() -> PostEmbeddingStorage:
+    return FailingPostEmbeddingStorage()
+
+
+class MockEmbeddingGenerator(EmbeddingGenerator):
+    def generate(self, post: Post) -> PostEmbedding:
+        return PostEmbedding(
+            post_id=post.id,
+            embedding_model="fake",
+            dimensions=2,
+            vector=[1.0, 2.0],
+            created_at=post.created_at,
+            updated_at=post.updated_at,
+        )
+
+
+@pytest.fixture
+def mock_embedding_generator() -> EmbeddingGenerator:
+    return MockEmbeddingGenerator()
+
+
+####################################################################################
+# Post Management
+@pytest.fixture
+def unit_of_work(in_memory_db_connection) -> UnitOfWork:
+    return SqliteUnitOfWork(in_memory_db_connection)

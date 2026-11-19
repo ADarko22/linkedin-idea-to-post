@@ -22,11 +22,11 @@ repos:
         types: [python]
         pass_filenames: false
 
-#      - id: pytest
-#        name: pytest
-#        entry: uv run pytest
-#        language: system
-#        types: [python]
-#        pass_filenames: false
-#        # Optional: stage to 'pre-push' if running tests on every commit is too slow
-#        stages: [pre-commit]
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        # Optional: stage to 'pre-push' if running tests on every commit is too slow
+        stages: [pre-commit]

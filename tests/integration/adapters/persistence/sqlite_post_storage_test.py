@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -39,19 +40,45 @@ def test_save_same_id_twice_updates_the_post(in_memory_storage, sample_post) -> 
     assert post == updated_post
 
 
-def test_save_and_get_post_across_multiple_instances(
-    tmp_path, sample_post: Post
+def test_uncommitted_save_is_not_visible_from_second_connection(
+    tmp_path: Path, sample_post: Post
 ) -> None:
     db_path = tmp_path / "test.db"
-    storage_settings = PersistenceSettings(db_path=db_path)
-    db_connection = create_sqlite_connection(storage_settings)
+    settings = PersistenceSettings(db_path=db_path)
 
-    storage1 = SqlitePostStorage(db_connection)
+    conn1 = create_sqlite_connection(settings)
+    conn2 = create_sqlite_connection(settings)
+
+    storage1 = SqlitePostStorage(conn1)
     storage1.save(sample_post)
+    assert storage1.get(sample_post.id) == sample_post
 
-    storage2 = SqlitePostStorage(db_connection)
-    post = storage2.get(sample_post.id)
-    assert post == sample_post
+    # changes from storage1 connection are not visible to storage2 because save is not committed!
+    storage2 = SqlitePostStorage(conn2)
+    assert storage2.get(sample_post.id) is None
+
+
+def test_uncommitted_delete_is_not_visible_from_second_connection(
+    tmp_path: Path, sample_post: Post
+) -> None:
+    db_path = tmp_path / "test.db"
+    settings = PersistenceSettings(db_path=db_path)
+
+    conn1 = create_sqlite_connection(settings)
+    storage1 = SqlitePostStorage(conn1)
+
+    conn2 = create_sqlite_connection(settings)
+    storage2 = SqlitePostStorage(conn2)
+
+    storage1.save(sample_post)
+    conn1.commit()
+    assert storage2.get(sample_post.id) == sample_post
+
+    storage1.delete(sample_post.id)
+    assert storage1.get(sample_post.id) is None
+
+    # changes from storage1 connection are not visible to storage2 because delete is not committed!
+    assert storage2.get(sample_post.id) == sample_post
 
 
 def test_save_get_all_posts_raises_error_on_invalid_pagination(

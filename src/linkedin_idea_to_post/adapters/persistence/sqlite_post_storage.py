@@ -33,27 +33,24 @@ class SqlitePostStorage(PostStorage):
         self._db_connection = db_connection
 
     def save(self, post: Post) -> None:
-        with self._db_connection:
-            json_post = post.model_dump_json()
-            parameters = (str(post.id), json_post)
-            self._db_connection.execute(_UPSERT_POST, parameters)
+        """Executes the upsert statement without committing; caller/UnitOfWork owns transaction boundaries."""
+        json_post = post.model_dump_json()
+        parameters = (str(post.id), json_post)
+        self._db_connection.execute(_UPSERT_POST, parameters)
 
     def delete(self, post_id: UUID) -> None:
-        with self._db_connection:
-            parameters = (str(post_id),)
-            self._db_connection.execute(_DELETE_POST, parameters)
+        """Executes the delete statement without committing; caller/UnitOfWork owns transaction boundaries."""
+        parameters = (str(post_id),)
+        self._db_connection.execute(_DELETE_POST, parameters)
 
     def get(self, post_id: UUID) -> Post | None:
-        with self._db_connection:
-            parameters = (str(post_id),)
-            row = self._db_connection.execute(_GET_POST, parameters).fetchone()
-            if row is None:
-                return None
-            return Post.model_validate_json(row["doc"])
+        parameters = (str(post_id),)
+        row = self._db_connection.execute(_GET_POST, parameters).fetchone()
+        if row is None:
+            return None
+        return Post.model_validate_json(row["doc"])
 
     def get_all(self, query: PostGetQuery) -> list[Post]:
         sql_query, params = build_get_all_posts_sql(query)
-
-        with self._db_connection:
-            rows = self._db_connection.execute(sql_query, params).fetchall()
+        rows = self._db_connection.execute(sql_query, params).fetchall()
         return [Post.model_validate_json(row["doc"]) for row in rows]

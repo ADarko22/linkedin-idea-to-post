@@ -83,6 +83,13 @@ The **cosine similarity** is computed using a Matrix to Vector product with [num
 
 Pure functions for building the search queries with advanced filtering.
 
+### [sqllite_unit_of_work.py](sqllite_unit_of_work.py)
+
+The `SqliteUnitOfWork` implements the `UnitOfWork` use case protocol to provide a way to perform atomic database changes
+on multiple tables.
+
+Implements the [Unit Of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html) design pattern.
+
 ## Design considerations
 
 `SqlitePostStorage` provides a simple initial storage solution. Its implementation can be abstracted later to support

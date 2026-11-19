@@ -70,7 +70,7 @@ _SCHEMA_SQL = """
         vector BLOB NOT NULL,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+        FOREIGN KEY (post_id) REFERENCES posts (id)
     );
 """
 
