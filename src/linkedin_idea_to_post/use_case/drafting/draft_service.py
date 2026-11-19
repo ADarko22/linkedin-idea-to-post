@@ -10,7 +10,9 @@ from linkedin_idea_to_post.domain.retrieval import (
     FullTextPostSearchQuery,
     PostRetriever,
 )
-from linkedin_idea_to_post.domain.storage import PostStorage
+from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
+    PostStoreManagementService,
+)
 
 
 class DraftService:
@@ -18,13 +20,13 @@ class DraftService:
         self,
         settings: DraftingSettings,
         writer: DraftWriter,
-        storage: PostStorage,
+        post_store_manager: PostStoreManagementService,
         retriever: PostRetriever,
         timestamp_provider: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.settings = settings
         self.writer = writer
-        self.storage = storage
+        self.post_store_manager = post_store_manager
         self.retriever = retriever
         self.timestamp_provider = timestamp_provider
 
@@ -55,7 +57,7 @@ class DraftService:
             updated_at=now,
         )
 
-        self.storage.save(draft_post)
+        self.post_store_manager.save_post(draft_post)
 
         return draft_post
 

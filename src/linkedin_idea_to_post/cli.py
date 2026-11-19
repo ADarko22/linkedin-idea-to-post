@@ -11,18 +11,30 @@ from linkedin_idea_to_post.adapters.ai_workflow.crewai_draft_writer import (
     CrewaiDraftWriter,
 )
 from linkedin_idea_to_post.adapters.ai_workflow.llm_factory import build_llm
+from linkedin_idea_to_post.adapters.embedding.embedding_generator import (
+    PyTorchEmbeddingGenerator,
+)
 from linkedin_idea_to_post.adapters.persistence.database import create_sqlite_connection
+from linkedin_idea_to_post.adapters.persistence.sqlite_post_embedding_storage import (
+    SQLitePostEmbeddingStorage,
+)
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_retrieval import (
     SqlitePostRetriever,
 )
 from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
     SqlitePostStorage,
 )
+from linkedin_idea_to_post.adapters.persistence.sqllite_unit_of_work import (
+    SqliteUnitOfWork,
+)
 from linkedin_idea_to_post.config import AppConfig, ConfigurationError
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.use_case.drafting.draft_service import DraftService
 from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_importer import CsvImporter
 from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
+from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
+    PostStoreManagementService,
+)
 
 console = Console()
 
@@ -85,10 +97,22 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
 
     writer = CrewaiDraftWriter(llm=llm)
     db_connection = create_sqlite_connection(settings=config.storage)
-    storage = SqlitePostStorage(db_connection=db_connection)
+    unit_of_work = SqliteUnitOfWork(db_connection=db_connection)
+    post_storage = SqlitePostStorage(db_connection=db_connection)
+    embedding_storage = SQLitePostEmbeddingStorage(db_connection=db_connection)
+    embedding_generator = PyTorchEmbeddingGenerator(config.embedding)
+    post_store_manager = PostStoreManagementService(
+        embedding_generator=embedding_generator,
+        unit_of_work=unit_of_work,
+        post_storage=post_storage,
+        embedding_storage=embedding_storage,
+    )
     retriever = SqlitePostRetriever(db_connection=db_connection)
     draft_service = DraftService(
-        settings=config.drafting, writer=writer, storage=storage, retriever=retriever
+        settings=config.drafting,
+        writer=writer,
+        post_store_manager=post_store_manager,
+        retriever=retriever,
     )
 
     if dry_run:
@@ -129,8 +153,17 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
     """
     config = AppConfig()
     db_connection = create_sqlite_connection(settings=config.storage)
-    storage = SqlitePostStorage(db_connection=db_connection)
-    importer = CsvImporter(parser=CsvParser(), storage=storage)
+    unit_of_work = SqliteUnitOfWork(db_connection=db_connection)
+    post_storage = SqlitePostStorage(db_connection=db_connection)
+    embedding_storage = SQLitePostEmbeddingStorage(db_connection=db_connection)
+    embedding_generator = PyTorchEmbeddingGenerator(config.embedding)
+    post_store_manager = PostStoreManagementService(
+        embedding_generator=embedding_generator,
+        unit_of_work=unit_of_work,
+        post_storage=post_storage,
+        embedding_storage=embedding_storage,
+    )
+    importer = CsvImporter(parser=CsvParser(), post_store_manager=post_store_manager)
 
     with console.status("[bold green]Parsing and validating CSV...[/bold green]"):
         result = importer.prepare(csv_path)

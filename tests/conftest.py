@@ -35,7 +35,8 @@ from linkedin_idea_to_post.domain.post import (
 from linkedin_idea_to_post.domain.retrieval import PostRetriever
 from linkedin_idea_to_post.domain.storage import PostEmbeddingStorage, PostStorage
 from linkedin_idea_to_post.use_case.linkedin_ingestion.model import RawPost
-from linkedin_idea_to_post.use_case.post_management.post_write_management_service import (
+from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
+    PostStoreManagementService,
     UnitOfWork,
 )
 
@@ -119,12 +120,14 @@ def create_csv_post_file(tmp_path: Path) -> CSVFactory:
 
 
 @pytest.fixture
-def in_memory_storage(in_memory_db_connection: sqlite3.Connection) -> PostStorage:
+def in_memory_post_storage(in_memory_db_connection: sqlite3.Connection) -> PostStorage:
     return SqlitePostStorage(in_memory_db_connection)
 
 
 @pytest.fixture
-def in_memory_retriever(in_memory_db_connection: sqlite3.Connection) -> PostRetriever:
+def in_memory_post_retriever(
+    in_memory_db_connection: sqlite3.Connection,
+) -> PostRetriever:
     return SqlitePostRetriever(in_memory_db_connection)
 
 
@@ -141,6 +144,23 @@ def embedding_generator() -> EmbeddingGenerator:
     return PyTorchEmbeddingGenerator(settings)
 
 
+class MockEmbeddingGenerator(EmbeddingGenerator):
+    def generate(self, post: Post) -> PostEmbedding:
+        return PostEmbedding(
+            post_id=post.id,
+            embedding_model="fake",
+            dimensions=2,
+            vector=[1.0, 2.0],
+            created_at=post.created_at,
+            updated_at=post.updated_at,
+        )
+
+
+@pytest.fixture
+def mock_embedding_generator() -> EmbeddingGenerator:
+    return MockEmbeddingGenerator()
+
+
 @pytest.fixture
 def sample_embedding() -> PostEmbedding:
     return PostEmbedding(
@@ -151,14 +171,6 @@ def sample_embedding() -> PostEmbedding:
         created_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
         updated_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),
     )
-
-
-@pytest.fixture
-def embedding_factory(sample_embedding: PostEmbedding) -> Callable[..., PostEmbedding]:
-    def make(**overrides: Any) -> PostEmbedding:
-        return sample_embedding.model_copy(update={"post_id": uuid4(), **overrides})
-
-    return make
 
 
 @pytest.fixture
@@ -193,25 +205,23 @@ def failing_embedding_storage() -> PostEmbeddingStorage:
     return FailingPostEmbeddingStorage()
 
 
-class MockEmbeddingGenerator(EmbeddingGenerator):
-    def generate(self, post: Post) -> PostEmbedding:
-        return PostEmbedding(
-            post_id=post.id,
-            embedding_model="fake",
-            dimensions=2,
-            vector=[1.0, 2.0],
-            created_at=post.created_at,
-            updated_at=post.updated_at,
-        )
-
-
-@pytest.fixture
-def mock_embedding_generator() -> EmbeddingGenerator:
-    return MockEmbeddingGenerator()
-
-
 ####################################################################################
 # Post Management
 @pytest.fixture
 def unit_of_work(in_memory_db_connection) -> UnitOfWork:
     return SqliteUnitOfWork(in_memory_db_connection)
+
+
+@pytest.fixture
+def in_memory_post_store_manager(
+    unit_of_work: UnitOfWork,
+    embedding_generator: EmbeddingGenerator,
+    in_memory_post_storage: PostStorage,
+    in_memory_embedding_storage: PostEmbeddingStorage,
+) -> PostStoreManagementService:
+    return PostStoreManagementService(
+        unit_of_work=unit_of_work,
+        embedding_generator=embedding_generator,
+        post_storage=in_memory_post_storage,
+        embedding_storage=in_memory_embedding_storage,
+    )

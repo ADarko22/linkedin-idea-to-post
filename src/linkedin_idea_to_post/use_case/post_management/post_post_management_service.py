@@ -26,7 +26,7 @@ class UnitOfWork(Protocol):
     ) -> bool | None: ...
 
 
-class PostWriteManagementService:
+class PostStoreManagementService:
     """
     Use Case responsible for the atomicity of writes on PostStorage and PostEmbeddingStorage:
     updates to the posts and post_embeddings tables must happen as a single unit of work.

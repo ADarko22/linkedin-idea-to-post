@@ -2,7 +2,7 @@ import sqlite3
 from types import TracebackType
 from typing import Self
 
-from linkedin_idea_to_post.use_case.post_management.post_write_management_service import (
+from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
     UnitOfWork,
 )
 

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from linkedin_idea_to_post.domain.storage import PostStorage
 from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
 from linkedin_idea_to_post.use_case.linkedin_ingestion.mapper import (
     raw_post_to_post,
@@ -11,6 +10,9 @@ from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     CsvMappingError,
     CsvParserResult,
     MappingFailure,
+)
+from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
+    PostStoreManagementService,
 )
 
 
@@ -31,9 +33,11 @@ def process_parser_result(parser_result: CsvParserResult) -> CsvImporterPrepareR
 
 
 class CsvImporter:
-    def __init__(self, parser: CsvParser, storage: PostStorage):
+    def __init__(
+        self, parser: CsvParser, post_store_manager: PostStoreManagementService
+    ):
         self.csv_parser = parser
-        self.storage = storage
+        self.post_store_manager = post_store_manager
 
     def prepare(self, file_path: Path) -> CsvImporterPrepareResult:
         """
@@ -50,13 +54,8 @@ class CsvImporter:
         """
         Commits the import of the posts extracted from the CSV file, by persisting to the application persistence.
         """
-        # todo model appropriate input
-
-        # todo add logic for possible CsvImporterCommitResult states
-
         for post in prepare_result.posts:
-            self.storage.save(post)
-            # todo: improve with a save_all
+            self.post_store_manager.save_post(post)
 
         committed_count = len(prepare_result.posts)
         return CsvImporterCommitResult(committed_count=committed_count)
