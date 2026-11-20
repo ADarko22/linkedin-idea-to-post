@@ -25,6 +25,12 @@ from linkedin_idea_to_post.adapters.persistence.sqllite_unit_of_work import (
     SqliteUnitOfWork,
 )
 from linkedin_idea_to_post.config import EmbeddingSettings, PersistenceSettings
+from linkedin_idea_to_post.domain.drafting import (
+    DraftContext,
+    DraftRequest,
+    KnowledgeSelection,
+    VoiceSelection,
+)
 from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
 from linkedin_idea_to_post.domain.post import (
     Post,
@@ -224,4 +230,24 @@ def in_memory_post_store_manager(
         embedding_generator=embedding_generator,
         post_storage=in_memory_post_storage,
         embedding_storage=in_memory_embedding_storage,
+    )
+
+
+####################################################################################
+# Drafting
+@pytest.fixture
+def sample_draft_request(post_factory) -> DraftRequest:
+    request_idea = "My idea of post"
+    post1 = post_factory(id=UUID(int=1), body="Post 1 body.")
+    post2 = post_factory(id=UUID(int=2), body="Post 2 body.")
+    relevant_posts = {post1.id: post1, post2.id: post2}
+    draft_context = DraftContext(
+        voice_selections=[VoiceSelection(post_id=post1.id)],
+        knowledge_selections=[
+            KnowledgeSelection(post_id=post1.id),
+            KnowledgeSelection(post_id=post2.id),
+        ],
+    )
+    return DraftRequest(
+        idea=request_idea, relevant_posts=relevant_posts, context=draft_context
     )

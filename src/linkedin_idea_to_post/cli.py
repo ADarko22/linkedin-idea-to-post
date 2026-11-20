@@ -28,7 +28,11 @@ from linkedin_idea_to_post.adapters.persistence.sqllite_unit_of_work import (
     SqliteUnitOfWork,
 )
 from linkedin_idea_to_post.config import AppConfig, ConfigurationError
+from linkedin_idea_to_post.domain.drafting import DraftRequest
 from linkedin_idea_to_post.domain.storage import PostGetQuery
+from linkedin_idea_to_post.use_case.drafting.draft_context_service import (
+    DraftContextService,
+)
 from linkedin_idea_to_post.use_case.drafting.draft_service import DraftService
 from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_importer import CsvImporter
 from linkedin_idea_to_post.use_case.linkedin_ingestion.csv_parser import CsvParser
@@ -108,20 +112,28 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
         embedding_storage=embedding_storage,
     )
     retriever = SqlitePostRetriever(db_connection=db_connection)
-    draft_service = DraftService(
+
+    draft_context_service = DraftContextService(
         settings=config.drafting,
+        retriever=retriever,
+        embedding_generator=embedding_generator,
+    )
+
+    draft_context = draft_context_service.create_context(idea=idea)
+    draft_request = DraftRequest(idea=idea, context=draft_context)
+
+    draft_service = DraftService(
         writer=writer,
         post_store_manager=post_store_manager,
-        retriever=retriever,
     )
 
     if dry_run:
-        draft_post = draft_service.compose(idea)
-        content = f"[dim]{Text(draft_post.body)}[/dim]\n"
+        draft_post = draft_service.compose(draft_request)
+        content = f"[dim]{Text(draft_post.generated_content)}[/dim]\n"
         console.print(Panel(content, title="Generated Draft", border_style="dim"))
 
     else:
-        post = draft_service.draft(idea)
+        post = draft_service.draft(draft_request)
         content = (
             f"[dim]ID: {post.id} | Origin: {post.origin} | Status: {post.status}[/dim]\n"
             f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n\n"

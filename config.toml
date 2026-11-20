@@ -5,6 +5,7 @@ db_path = "./data/archive.db"
 
 [drafting]
 voice_examples_count = 3
+knowledge_examples_count = 5
 
 [embedding]
 model_name = "BAAI/bge-large-en-v1.5"

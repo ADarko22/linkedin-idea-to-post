@@ -2,14 +2,9 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 
-from linkedin_idea_to_post.config import DraftingSettings
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
-from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus, ScoredPost
+from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
-from linkedin_idea_to_post.domain.retrieval import (
-    FullTextPostSearchQuery,
-    PostRetriever,
-)
 from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
     PostStoreManagementService,
 )
@@ -18,38 +13,30 @@ from linkedin_idea_to_post.use_case.post_management.post_post_management_service
 class DraftService:
     def __init__(
         self,
-        settings: DraftingSettings,
         writer: DraftWriter,
         post_store_manager: PostStoreManagementService,
-        retriever: PostRetriever,
         timestamp_provider: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
-        self.settings = settings
         self.writer = writer
         self.post_store_manager = post_store_manager
-        self.retriever = retriever
         self.timestamp_provider = timestamp_provider
 
-    def compose(self, idea: str) -> Draft:
-        voice_example_posts = self._find_voice_examples(idea)
-
-        voice_examples = [scored_post.post.body for scored_post in voice_example_posts]
-        draft_request = DraftRequest(idea=idea, voice_examples=voice_examples)
+    def compose(self, draft_request: DraftRequest) -> Draft:
         return self.writer.write(draft_request)
 
-    def draft(self, idea: str) -> Post:
-        draft = self.compose(idea)
+    def draft(self, draft_request: DraftRequest) -> Post:
+        draft = self.compose(draft_request)
 
-        post_title = extract_title(draft.body)
-        post_id = uuid.uuid5(uuid.NAMESPACE_URL, idea)
-        topics = extract_hashtags(draft.body)
+        post_title = extract_title(draft.generated_content)
+        post_id = uuid.uuid5(uuid.NAMESPACE_URL, draft_request.idea)
+        topics = extract_hashtags(draft.generated_content)
         now = self.timestamp_provider()
 
         draft_post = Post(
             id=post_id,
             url=None,
             title=post_title,
-            body=draft.body,
+            body=draft.generated_content,
             topics=topics,
             status=PostStatus.DRAFT,
             origin=PostOrigin.AI_DRAFT,
@@ -60,12 +47,3 @@ class DraftService:
         self.post_store_manager.save_post(draft_post)
 
         return draft_post
-
-    def _find_voice_examples(self, idea: str) -> list[ScoredPost]:
-        query = FullTextPostSearchQuery(
-            search_text=idea,
-            origins=[PostOrigin.HUMAN],
-            statuses=[PostStatus.PUBLISHED],
-            limit=self.settings.voice_examples_count,
-        )
-        return self.retriever.full_text_search(query)

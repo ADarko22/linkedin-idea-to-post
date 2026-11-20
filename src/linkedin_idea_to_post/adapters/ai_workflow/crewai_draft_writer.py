@@ -14,15 +14,19 @@ class CrewaiDraftWriter(DraftWriter):
         self.llm = llm
 
     def write(self, request: DraftRequest) -> Draft:
+        voices = [
+            request.relevant_posts[s.post_id].body
+            for s in request.context.voice_selections
+        ]
         output = (
             WriterCrew(self.llm)
             .crew()
             .kickoff(
                 inputs={
                     "idea": request.idea,
-                    "voice_examples": format_voice_examples(request.voice_examples),
+                    "voice_examples": format_voice_examples(voices),
                 }
             )
         )
         crew_output = cast(CrewOutput, output)
-        return Draft(body=crew_output.raw)
+        return Draft(idea=request.idea, generated_content=crew_output.raw)
