@@ -72,7 +72,10 @@ def build_embedding_search_sql(
     query: VectorPostSearchQuery,
 ) -> tuple[str, list[Any]]:
     clauses = ["post_embeddings.model_name = ?", "post_embeddings.dimensions = ?"]
-    params: list[Any] = [query.embedding_model, query.dimensions]
+    params: list[Any] = [
+        query.search_text_embedding.embedding_model,
+        query.search_text_embedding.dimensions,
+    ]
 
     if query.statuses:
         placeholders = ",".join("?" for _ in query.statuses)

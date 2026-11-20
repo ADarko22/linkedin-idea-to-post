@@ -46,7 +46,7 @@ class SqlitePostRetriever(PostRetriever):
     def _top_k_scored_posts(
         query: VectorPostSearchQuery, rows: list[Any]
     ) -> list[ScoredPost]:
-        query_vec = np.asarray(query.embedding_vector, dtype=np.float32)
+        query_vec = np.asarray(query.search_text_embedding.vector, dtype=np.float32)
         matrix = np.vstack(
             [np.frombuffer(row["vector"], dtype=np.float32) for row in rows]
         )

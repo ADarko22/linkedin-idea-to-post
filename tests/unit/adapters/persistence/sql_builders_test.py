@@ -8,6 +8,7 @@ from linkedin_idea_to_post.adapters.persistence.sql_builders import (
     build_get_all_posts_sql,
     prepare_fts_expression,
 )
+from linkedin_idea_to_post.domain.embedding import TextEmbedding
 from linkedin_idea_to_post.domain.post import PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.retrieval import (
     FullTextPostSearchQuery,
@@ -106,7 +107,9 @@ def test_build_full_text_search_sql_with_invalid_limit():
     [
         (
             VectorPostSearchQuery(
-                embedding_vector=[1.0, -1.0], embedding_model="model", dimensions=2
+                search_text_embedding=TextEmbedding(
+                    vector=[1.0, -1.0], embedding_model="model", dimensions=2
+                )
             ),
             [
                 "model",
@@ -115,9 +118,9 @@ def test_build_full_text_search_sql_with_invalid_limit():
         ),
         (
             VectorPostSearchQuery(
-                embedding_vector=[1.0, -1.0],
-                embedding_model="model",
-                dimensions=2,
+                search_text_embedding=TextEmbedding(
+                    vector=[1.0, -1.0], embedding_model="model", dimensions=2
+                ),
                 origins=[PostOrigin.HUMAN],
                 statuses=[PostStatus.PUBLISHED],
                 limit=5,
@@ -130,9 +133,9 @@ def test_build_embedding_search_sql(
     query: VectorPostSearchQuery, expected_params: list
 ) -> None:
     query = VectorPostSearchQuery(
-        embedding_vector=[1.0, -1.0],
-        embedding_model="model",
-        dimensions=2,
+        search_text_embedding=TextEmbedding(
+            vector=[1.0, -1.0], embedding_model="model", dimensions=2
+        ),
         origins=[PostOrigin.HUMAN],
         statuses=[PostStatus.PUBLISHED],
         limit=5,
@@ -144,7 +147,9 @@ def test_build_embedding_search_sql(
 
 def test_build_embedding_search_sql_without_origins_and_statuses() -> None:
     query = VectorPostSearchQuery(
-        embedding_vector=[1.0, -1.0], embedding_model="model", dimensions=2
+        search_text_embedding=TextEmbedding(
+            vector=[1.0, -1.0], embedding_model="model", dimensions=2
+        )
     )
     expected_sql = "SELECT posts.doc, post_embeddings.vector\n        FROM posts\n        JOIN post_embeddings ON posts.id = post_embeddings.post_id\n        WHERE post_embeddings.model_name = ? AND post_embeddings.dimensions = ?"
     expected_params = [

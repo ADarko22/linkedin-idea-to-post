@@ -6,7 +6,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from linkedin_idea_to_post.config import EmbeddingSettings
-from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
+from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator, TextEmbedding
 from linkedin_idea_to_post.domain.post import Post, PostEmbedding
 
 
@@ -56,4 +56,13 @@ class PyTorchEmbeddingGenerator(EmbeddingGenerator):
             vector=embedding_vector,
             created_at=now,
             updated_at=now,
+        )
+
+    def embed_text(self, text: str) -> TextEmbedding:
+        embeddings = self._sentence_transformer.encode(text, convert_to_numpy=True)
+        embedding_vector = np.asarray(embeddings, dtype=np.float32).tolist()
+        return TextEmbedding(
+            vector=embedding_vector,
+            embedding_model=self._embedding_settings.model_name,
+            dimensions=len(embedding_vector),
         )

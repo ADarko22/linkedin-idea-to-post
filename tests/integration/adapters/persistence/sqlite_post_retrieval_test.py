@@ -1,6 +1,6 @@
 import pytest
 
-from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator
+from linkedin_idea_to_post.domain.embedding import EmbeddingGenerator, TextEmbedding
 from linkedin_idea_to_post.domain.post import Post
 from linkedin_idea_to_post.domain.retrieval import (
     FullTextPostSearchQuery,
@@ -176,9 +176,11 @@ def test_semantic_search_ranks_most_similar_post_first(
         post1.model_copy(update={"title": query_text, "body": query_text})
     )
     query = VectorPostSearchQuery(
-        embedding_vector=query_embedding.vector,
-        embedding_model=query_embedding.embedding_model,
-        dimensions=query_embedding.dimensions,
+        search_text_embedding=TextEmbedding(
+            vector=query_embedding.vector,
+            embedding_model=query_embedding.embedding_model,
+            dimensions=query_embedding.dimensions,
+        ),
         limit=2,
     )
 

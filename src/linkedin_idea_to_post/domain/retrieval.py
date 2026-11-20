@@ -2,6 +2,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, Field
 
+from linkedin_idea_to_post.domain.embedding import TextEmbedding
 from linkedin_idea_to_post.domain.post import PostOrigin, PostStatus, ScoredPost
 
 DEFAULT_MAX_RESULTS = 10
@@ -18,9 +19,7 @@ class FullTextPostSearchQuery(BasePostSearchQuery):
 
 
 class VectorPostSearchQuery(BasePostSearchQuery):
-    embedding_vector: list[float]
-    embedding_model: str
-    dimensions: int
+    search_text_embedding: TextEmbedding
 
 
 class PostRetriever(Protocol):
