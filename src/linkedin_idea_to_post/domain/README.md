@@ -12,7 +12,7 @@ Defines the `Post` class, representing a LinkedIn post.
 | Attribute    | Description                                                                              |
 |--------------|------------------------------------------------------------------------------------------|
 | **body**     | The post's textual content.                                                              |
-| **topics**   | The post's textual content.                                                              |
+| **hashtags** | The hashtags contained in the post.                                                      |
 | **Metadata** | Additional information associated with the post, such as timestamps, origin, and status. |
 
 Defines the `PostEmbedding` class, presenting the embedding of a `Post`.

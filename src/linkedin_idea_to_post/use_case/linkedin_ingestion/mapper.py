@@ -137,7 +137,7 @@ def raw_post_to_post(raw_post: RawPost) -> Post:
         function=extract_sanitized_body, share_commentary=raw_post.share_commentary
     )
 
-    topics = (
+    hashtags = (
         collector.capture(function=extract_hashtags, raw_body=body)
         if body is not None
         else None
@@ -149,14 +149,14 @@ def raw_post_to_post(raw_post: RawPost) -> Post:
         post_uuid is not None
         and post_datetime is not None
         and body is not None
-        and topics is not None
+        and hashtags is not None
     )
 
     return Post(
         id=post_uuid,
         url=raw_post.share_link,
         body=body,
-        topics=topics,
+        hashtags=hashtags,
         origin=PostOrigin.HUMAN,
         status=PostStatus.PUBLISHED,
         created_at=post_datetime,

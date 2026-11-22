@@ -28,14 +28,14 @@ class DraftService:
         draft = self.compose(draft_request)
 
         post_id = uuid.uuid5(uuid.NAMESPACE_URL, draft_request.idea)
-        topics = extract_hashtags(draft.generated_content)
+        hashtags = extract_hashtags(draft.generated_content)
         now = self.timestamp_provider()
 
         draft_post = Post(
             id=post_id,
             url=None,
             body=draft.generated_content,
-            topics=topics,
+            hashtags=hashtags,
             status=PostStatus.DRAFT,
             origin=PostOrigin.AI_DRAFT,
             created_at=now,

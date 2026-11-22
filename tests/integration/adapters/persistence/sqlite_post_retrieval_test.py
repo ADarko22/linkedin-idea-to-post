@@ -12,11 +12,11 @@ from linkedin_idea_to_post.domain.retrieval import (
 def seeded_posts(post_factory, in_memory_post_storage) -> tuple[Post, Post]:
     post1 = post_factory(
         body="Having a good life, healthy food and active days is more important than a high paid 9 to 6 job.",
-        topics={"quality_of_life", "healthy_food", "active_days", "job"},
+        hashtags={"quality_of_life", "healthy_food", "active_days", "job"},
     )
     post2 = post_factory(
-        body="Having a good job that makes you happy is more important than a high paid 9 to 6 job.",
-        topics={"satisfaction", "job"},
+        body="Having a good job that makes you happy is more important than a high paid 9 to 6 job.\n#satisfaction #job",
+        hashtags={"satisfaction", "job"},
     )
     in_memory_post_storage.save(post1)
     in_memory_post_storage.save(post2)
@@ -53,13 +53,13 @@ def test_full_text_search_retrieves_nothing_when_no_terms_match(
 # --- Trigger & Index Synchronization Tests ---
 
 
-def test_insert_trigger_indexes_topics_via_json_each(
+def test_insert_trigger_indexes_hashtags_via_json_each(
     post_factory, in_memory_post_storage, in_memory_post_retriever
 ) -> None:
-    """Verifies AFTER INSERT trigger extracts and indexes JSON array elements in $.topics."""
+    """Verifies AFTER INSERT trigger extracts and indexes JSON array elements in $.hashtags."""
     post = post_factory(
         body="Measure p99 latency before scaling nodes.\n#observability #kuberneter",
-        topics={"observability", "kubernetes"},
+        hashtags={"observability", "kubernetes"},
     )
     in_memory_post_storage.save(post)
 
@@ -75,7 +75,7 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
     """Verifies AFTER UPDATE trigger executes FTS5 'delete' for OLD values and inserts NEW values."""
     post = post_factory(
         body="Running a single Java JAR on bare metal.\n#java #monolith",
-        topics={"java", "monolith"},
+        hashtags={"java", "monolith"},
     )
     in_memory_post_storage.save(post)
     scored_posts = in_memory_post_retriever.full_text_search(
@@ -86,7 +86,7 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
     updated_post = post.model_copy(
         update={
             "body": "Building pipelines with Apache Kafka. #kafka #streaming",
-            "topics": {"kafka", "streaming"},
+            "hashtags": {"kafka", "streaming"},
         }
     )
     in_memory_post_storage.save(updated_post)
@@ -118,7 +118,7 @@ def test_delete_trigger_removes_document_from_index(
     """Verifies AFTER DELETE trigger removes the row from posts_fts."""
     post = post_factory(
         body="Managing cloud state safely. #terraform",
-        topics={"terraform"},
+        hashtags={"terraform"},
     )
     in_memory_post_storage.save(post)
     scored_posts = in_memory_post_retriever.full_text_search(

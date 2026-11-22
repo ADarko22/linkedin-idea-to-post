@@ -19,7 +19,7 @@ def test_utc_time_conversion_success() -> None:
         id=UUID(int=2),
         url="https://www.linkedin.com/test_url",
         body="This is a test post.",
-        topics={"test", "post"},
+        hashtags={"test", "post"},
         origin=PostOrigin.HUMAN,
         status=PostStatus.DRAFT,
         # 00:00:00+02:00 means it is 2 hours ahead of UTC
@@ -44,7 +44,7 @@ def test_utc_time_conversion_rejects_naive() -> None:
             id=UUID(int=2),
             url="https://www.linkedin.com/test_url",
             body="This is a test post.",
-            topics={"test", "post"},
+            hashtags={"test", "post"},
             origin=PostOrigin.HUMAN,
             status=PostStatus.DRAFT,
             # Missing any 'Z' or '+00:00' timezone suffix

@@ -98,7 +98,7 @@ def sample_post(seq_id: Iterator[int]) -> Post:
         id=UUID("b80c8fef-a677-5340-85fb-2c162d75df03"),
         url=f"https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A{n}",
         body=f"This is a test post {n}.\n#test #post",
-        topics={"test", "post"},
+        hashtags={"test", "post"},
         origin=PostOrigin.HUMAN,
         status=PostStatus.PUBLISHED,
         created_at=datetime.fromisoformat("2023-01-01T00:00:00Z"),

@@ -4,7 +4,7 @@ from linkedin_idea_to_post.domain.post_helpers import extract_hashtags
 
 
 ###############################################################################################################
-# Extract Topics from hashtags
+# Extract hashtags
 @pytest.mark.parametrize(
     "raw_body, expected_hashtags_set",
     [

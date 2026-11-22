@@ -31,7 +31,7 @@ class Post(UtcAwareBaseModel):
     id: UUID
     url: str | None
     body: str
-    topics: set[str]
+    hashtags: set[str]
     origin: PostOrigin
     status: PostStatus
 
