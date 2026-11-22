@@ -17,21 +17,21 @@ C4Container
     }
 
     System_Boundary(domain_b, "Domain") {
+        Component(post_embedding_m, "PostEmbedding", "Data Model")
         Component(embedding_p, "EmbeddingGenerator", "Protocol")
         Component(post_m, "Post", "Data Model")
-        Component(post_embedding_m, "PostEmbedding", "Data Model")
         Component(storage_p, "PostStorage", "Protocol")
         Component(embedding_storage_p, "PostEmbeddingStorage", "Protocol")
-    }
-
-    Container_Boundary(embedding_b, "Embedding Adapter") {
-        Component(pytorch_embedding_gen, "PyTorchEmbeddingGenerator", "PyTorch")
     }
 
     Container_Boundary(storage_b, "Storage Adapter") {
         ComponentDb(storage, "SqlitePostStorage", "SQLite")
         ComponentDb(embedding_storage, "SqlitePostEmbeddingStorage", "SQLite")
         ComponentDb(uow, "SqliteUnitOfWork", "SQLite")
+    }
+
+    Container_Boundary(embedding_b, "Embedding Adapter") {
+        Component(pytorch_embedding_gen, "PyTorchEmbeddingGenerator", "PyTorch")
     }
 
     Rel_R(write_manager, uow_p, "uses")
@@ -49,8 +49,8 @@ C4Container
 
 The Use Case for drafting a `Post` with an AI Writer.
 
-- `DraftService` orchestrates `Post` retrieval to build the right context for the `DraftWriter` (i.e.
-  `CrewaiDraftWriter`), and to correctly save it via `PostStoreManagementService`.
+- `DraftService` orchestrates writing of a `Draft` or a `Post` via the `DraftWriter` (i.e. `CrewaiDraftWriter`), and the
+  consistent saving of the generated `Post` via `PostStoreManagementService`.
 
 ```mermaid
 C4Container
@@ -64,22 +64,53 @@ C4Container
 
     System_Boundary(domain_b, "Domain") {
         Component(post_m, "Post", "Data Model")
-        Component(writer_p, "DraftWriter", "Protocol")
         Component(retriever_p, "PostRetriever", "Protocol")
-    }
-
-    Container_Boundary(workflow_b, "AI Workflow ADapter") {
-        Component(writer, "CrewaiDraftWriter", "CrewAI")
+        Component(writer_p, "DraftWriter", "Protocol")
     }
 
     Container_Boundary(storage_b, "Storage Adapter") {
         ComponentDb(retriever, "SqlitePostRetriever", "SQLite")
     }
 
+    Container_Boundary(workflow_b, "AI Workflow ADapter") {
+        Component(writer, "CrewaiDraftWriter", "CrewAI")
+    }
+
     Rel_R(drafter, writer_p, "uses")
     Rel_R(drafter, post_store_manager, "uses")
     Rel_R(drafter, retriever_p, "uses")
     Rel_L(writer, writer_p, "implements")
+    Rel_L(retriever, retriever_p, "implements")
+    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="5")
+```
+
+- `DraftContextService` orchestrates `Post` retrieval to build the right `DraftContext`.
+
+```mermaid
+C4Container
+    Container_Boundary(draft_b, "Drafting") {
+        Component(context_builder, "DraftContextService", "Use Case")
+    }
+
+    System_Boundary(domain_b, "Domain") {
+        Component(post_m, "Post", "Data Model")
+        Component(retriever_p, "PostRetriever", "Protocol")
+        Component(post_embedding_m, "PostEmbedding", "Data Model")
+        Component(embedder_p, "EmbeddingGenerator", "Protocol")
+        Component(draft_context_m, "DraftContext", "Data Model")
+    }
+
+    Container_Boundary(storage_b, "Storage Adapter") {
+        ComponentDb(retriever, "SqlitePostRetriever", "SQLite")
+    }
+
+    Container_Boundary(embedding_b, "Embedding Adapter") {
+        ComponentDb(embedder, "PyTorchEmbeddingGenerator", "PyTorch")
+    }
+
+    Rel_R(context_builder, retriever_p, "uses")
+    Rel_R(context_builder, embedder_p, "uses")
+    Rel_L(embedder, embedder_p, "implements")
     Rel_L(retriever, retriever_p, "implements")
     UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="5")
 ```
@@ -123,14 +154,24 @@ LinkedIn [
 `Post`](domain/post.py).
 
 ```mermaid
-flowchart LR
-    A[Write an idea] -- call --> B[DraftService]
-    B -- generates --> C[Post]
+flowchart TD
+    subgraph GraphA["Phase 1: Build DraftContext from the idea"]
+        direction LR
+        A[Build context for an idea] -- use --> B[DraftContextService]
+        B ---> DraftContext
+    end
+
+    subgraph  GraphB["Phase 2: Synchronous Ingestion (Automated)"]
+        direction LR
+        C[Write an idea] -- use with DraftContext --> D[DraftService]
+        D[DraftService] -- generates --> Draft
+    end
+    
+    GraphA --> GraphB
 ```
 
-### Importing posts from ~~LinkedIn~~
+### Importing posts from _LinkedIn_
 
-~~~~
 Downloading the LinkedIn data from [download-my-data](https://www.linkedin.com/mypreferences/d/download-my-data) and
 importing the Shares.csv file with [`CsvImporter`](linkedin/csv_importer.py).
 

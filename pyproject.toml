@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A multi-agent workflow that takes a raw user idea and transforms it into a high-impact LinkedIn post."
 readme = "README.md"
 authors = [
-    { name = "ADarko22", email = "a.elessar22@gmail.com" }
+    { name = "ADarko22", email = "anelo.buono992@gmail.com" }
 ]
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-linkedin-idea-to-post = "linkedin_idea_to_post:main"
+li2p = "linkedin_idea_to_post.cli.main:cli"
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
