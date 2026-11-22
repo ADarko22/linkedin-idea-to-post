@@ -260,12 +260,11 @@ def sample_draft_request(post_factory) -> DraftRequest:
     post2 = post_factory(id=UUID(int=2), body="Post 2 body.")
     relevant_posts = {post1.id: post1, post2.id: post2}
     draft_context = DraftContext(
+        relevant_posts=relevant_posts,
         voice_selections=[VoiceSelection(post_id=post1.id)],
         knowledge_selections=[
             KnowledgeSelection(post_id=post1.id),
             KnowledgeSelection(post_id=post2.id),
         ],
     )
-    return DraftRequest(
-        idea=request_idea, relevant_posts=relevant_posts, context=draft_context
-    )
+    return DraftRequest(idea=request_idea, context=draft_context)

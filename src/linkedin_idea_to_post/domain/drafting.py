@@ -8,25 +8,43 @@ from linkedin_idea_to_post.domain.post import Post
 
 
 class VoiceTuning(StrEnum):
-    # follow its tone, pacing, and structure closely
     MATCH_STYLE = "MATCH_STYLE"
-    # adopt the voice/tone, but tighten sentences and cut fluff
     MORE_CONCISE = "MORE_CONCISE"
-    # keep the voice, but unpack points with a bit more room/detail
     MORE_EXPANDED = "MORE_EXPANDED"
-    # borrow the opening rhythm/cadence while letting the rest of the post flow naturally.
     PUNCHY_HOOK_ONLY = "PUNCHY_HOOK_ONLY"
+
+    @property
+    def instruction(self) -> str:
+        match self:
+            case VoiceTuning.MATCH_STYLE:
+                return "Follow its tone, pacing, and structure closely."
+            case VoiceTuning.MORE_CONCISE:
+                return "Adopt the voice and tone, but tighten sentences and cut fluff."
+            case VoiceTuning.MORE_EXPANDED:
+                return (
+                    "Keep the voice, but unpack points with a bit more room and detail."
+                )
+            case VoiceTuning.PUNCHY_HOOK_ONLY:
+                return "Borrow the opening rhythm or cadence while letting the rest of the post flow naturally."
 
 
 class KnowledgeStance(StrEnum):
-    # build upon and reinforce the points/angle in that post
     SUPPORTIVE = "SUPPORTIVE"
-    # challenge, push back on, or offer a counter-perspective to that post
     CONTRARY = "CONTRARY"
-    # treat it purely as factual/historical background or context without taking sides or arguing against it
     NEUTRAL = "NEUTRAL"
-    # acknowledge the earlier post as a past take and show how your thinking has shifted since then
     EVOLVED_VIEW = "EVOLVED_VIEW"
+
+    @property
+    def instruction(self) -> str:
+        match self:
+            case KnowledgeStance.SUPPORTIVE:
+                return "Build upon and reinforce the points or angle in that post."
+            case KnowledgeStance.CONTRARY:
+                return "Challenge, push back on, or offer a counter-perspective to that post."
+            case KnowledgeStance.NEUTRAL:
+                return "Treat it purely as factual or historical background or context ithout taking sides or arguing against it."
+            case KnowledgeStance.EVOLVED_VIEW:
+                return "Acknowledge the earlier post as a past take and show how your thinking has shifted since then."
 
 
 class VoiceSelection(BaseModel):
@@ -40,13 +58,14 @@ class KnowledgeSelection(BaseModel):
 
 
 class DraftContext(BaseModel):
+    relevant_posts: dict[UUID, Post] = Field(default_factory=dict)
     voice_selections: list[VoiceSelection] = Field(default_factory=list)
     knowledge_selections: list[KnowledgeSelection] = Field(default_factory=list)
+    target_word_count: int = Field(default_factory=int)
 
 
 class DraftRequest(BaseModel):
     idea: str
-    relevant_posts: dict[UUID, Post] = Field(default_factory=dict)
     context: DraftContext = Field(default_factory=DraftContext)
 
 

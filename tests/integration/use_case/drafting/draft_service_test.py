@@ -1,50 +1,56 @@
+import pytest
+
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.use_case.drafting.draft_service import DraftService
 from tests.fake_draft_writer import FakeDraftWriter
 
 
-def test_compose_creates_draft(
-    in_memory_post_store_manager,
-    in_memory_post_storage,
-    in_memory_post_retriever,
-    sample_draft_request,
-):
-    writer = FakeDraftWriter()
-    draft_service = DraftService(
-        writer=writer,
+@pytest.fixture
+def draft_service(in_memory_post_store_manager):
+    return DraftService(
+        writer=FakeDraftWriter(),
         post_store_manager=in_memory_post_store_manager,
     )
 
+
+@pytest.fixture
+def expected_body(sample_draft_request):
+    ctx = sample_draft_request.context
+    voice_sel = ctx.voice_selections[0]
+    k_sel1, k_sel2 = ctx.knowledge_selections[:2]
+
+    return (
+        f"{sample_draft_request.idea}\n\n"
+        f"Voice examples (1):\n"
+        f"Example #1 tuning={voice_sel.tuning.value}:\n"
+        f"{ctx.relevant_posts[voice_sel.post_id].body}\n\n"
+        f"Knowledge posts (2):\n"
+        f"Post #1 stance={k_sel1.stance}:\n"
+        f"{ctx.relevant_posts[k_sel1.post_id].body}\n\n"
+        f"Post #2 stance={k_sel2.stance}:\n"
+        f"{ctx.relevant_posts[k_sel2.post_id].body}\n\n"
+    )
+
+
+def test_compose_creates_draft(
+    draft_service,
+    in_memory_post_storage,
+    sample_draft_request,
+    expected_body,
+):
     draft = draft_service.compose(sample_draft_request)
-    voice_post = sample_draft_request.relevant_posts[
-        sample_draft_request.context.voice_selections[0].post_id
-    ]
 
-    # nothing is saved to storage
-    assert len(in_memory_post_storage.get_all(PostGetQuery())) == 0
-
-    expected_body = f"{sample_draft_request.idea}\n\nVoice examples received (1):\nExample #1:\n{voice_post.body}\n\n"
     assert draft.generated_content == expected_body
+    assert len(in_memory_post_storage.get_all(PostGetQuery())) == 0
 
 
 def test_draft_saves_drafted_post(
-    in_memory_post_store_manager,
+    draft_service,
     in_memory_post_storage,
     sample_draft_request,
+    expected_body,
 ):
-    writer = FakeDraftWriter()
-    draft_service = DraftService(
-        writer=writer,
-        post_store_manager=in_memory_post_store_manager,
-    )
+    post = draft_service.draft(sample_draft_request)
 
-    draft_post = draft_service.draft(sample_draft_request)
-    voice_post = sample_draft_request.relevant_posts[
-        sample_draft_request.context.voice_selections[0].post_id
-    ]
-
-    # post is saved to storage
-    post = in_memory_post_storage.get(draft_post.id)
-    assert post == draft_post
-    expected_body = f"{sample_draft_request.idea}\n\nVoice examples received (1):\nExample #1:\n{voice_post.body}\n\n"
     assert post.body == expected_body
+    assert in_memory_post_storage.get(post.id) == post

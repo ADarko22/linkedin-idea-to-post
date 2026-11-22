@@ -1,16 +1,58 @@
 write_post:
   description: >
-    Write a comprehensive LinkedIn post about the core idea: "{idea}".
+    Write an engaging, high-signal LinkedIn post centered on the following core idea:
+
+    <core_idea>
     
+    {idea}
     
-    Use the "voice" derived from the style and language adopted in the examples of posts below. 
-    Use these examples only for the writing style and not as context for the content.
-    Limit the use of emoji.
-    The hashtags inherent with the post should go on the last line.
+    </core_idea>
+
+
+    ### 1. VOICE EXAMPLES & TUNING RULES
     
-    POST STYLE EXAMPLES:
+    Use the examples below to shape how the post sounds and is paced.
+    
+    Each example includes a TUNING instruction: apply that exact tuning rule for that example.
+    
+    CRITICAL RULE: Treat these examples strictly as stylistic guides. Do NOT copy their specific stories, topics, or phrasing unless required by a tuning rule (such as borrowing an opening hook cadence).
+
+
+    <voice_examples>
     
     {voice_examples}
+    
+    </voice_examples>
+
+
+    ### 2. KNOWLEDGE CONTEXT & STANCE RULES
+    
+    Use the prior posts below as topical or factual context for the new post.
+    
+    Each reference post includes a STANCE instruction: follow that exact stance when relating the new post to that reference.
+    
+    If multiple reference posts are listed, honor each post's individual stance cleanly without contradicting your core idea.
+
+
+    <knowledge_context>
+    
+    {knowledge_examples}
+    
+    </knowledge_context>
+
+
+    ### 3. FORMATTING & LENGTH CONSTRAINTS
+    
+    - Target length: approximately {target_word_count} words.
+    
+    - Keep emoji usage minimal and intentional.
+    
+    - Place all relevant hashtags together on the very last line of the post.
+    
+    - Output only the final post text ready for publishing—no introductory remarks, commentary, or markdown code fences.
+
   expected_output: >
-    A well-structured markdown blog post of roughly 500 words.
+    A publication-ready LinkedIn post of roughly {target_word_count} words that captures the core idea, 
+    applies each voice example's tuning rule, honors each knowledge post's stance, uses minimal emojis, 
+    and ends with hashtags on the final line.
   agent: writer

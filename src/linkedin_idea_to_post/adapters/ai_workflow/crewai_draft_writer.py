@@ -3,6 +3,7 @@ from typing import cast
 from crewai import CrewOutput
 
 from linkedin_idea_to_post.adapters.ai_workflow.prompt_helpers import (
+    format_knowledge_examples,
     format_voice_examples,
 )
 from linkedin_idea_to_post.adapters.ai_workflow.writer_crew import WriterCrew
@@ -14,17 +15,15 @@ class CrewaiDraftWriter(DraftWriter):
         self.llm = llm
 
     def write(self, request: DraftRequest) -> Draft:
-        voices = [
-            request.relevant_posts[s.post_id].body
-            for s in request.context.voice_selections
-        ]
         output = (
             WriterCrew(self.llm)
             .crew()
             .kickoff(
                 inputs={
                     "idea": request.idea,
-                    "voice_examples": format_voice_examples(voices),
+                    "voice_examples": format_voice_examples(request),
+                    "knowledge_examples": format_knowledge_examples(request),
+                    "target_word_count": request.context.target_word_count,
                 }
             )
         )

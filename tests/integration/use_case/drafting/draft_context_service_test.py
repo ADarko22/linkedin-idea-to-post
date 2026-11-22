@@ -17,6 +17,7 @@ def test_create_draft_context(
     in_memory_post_store_manager,
 ):
     idea = "cats demanding 5am breakfast and yelling like furry bosses"
+    target_word_count = 10
 
     # exact match of 10 word count
     published_human_post1 = post_factory(
@@ -59,6 +60,14 @@ def test_create_draft_context(
         in_memory_post_store_manager.save_post(post)
 
     expected_draft_context = DraftContext(
+        relevant_posts={
+            post.id: post
+            for post in (
+                published_human_post1,
+                published_human_post2,
+                published_ai_drafted_post,
+            )
+        },
         voice_selections=[
             VoiceSelection(post_id=published_human_post1.id),
             VoiceSelection(post_id=published_human_post2.id),
@@ -67,6 +76,7 @@ def test_create_draft_context(
             KnowledgeSelection(post_id=published_human_post1.id),
             KnowledgeSelection(post_id=published_ai_drafted_post.id),
         ],
+        target_word_count=target_word_count,
     )
 
     settings = DraftingSettings(voice_examples_count=2, knowledge_examples_count=2)
@@ -76,7 +86,6 @@ def test_create_draft_context(
         retriever=in_memory_post_retriever,
     )
 
-    target_word_count = 10
     draft_context = service.create_context(idea, target_word_count=target_word_count)
 
     assert draft_context == expected_draft_context

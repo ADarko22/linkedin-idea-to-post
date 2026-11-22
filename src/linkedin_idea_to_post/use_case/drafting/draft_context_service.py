@@ -38,13 +38,20 @@ class DraftContextService:
         )
         knowledge_candidates = self._find_knowledge_candidates(idea, idea_embedding)
 
+        all_scored_posts = voice_candidates + knowledge_candidates
+
         return DraftContext(
+            relevant_posts={
+                scored_post.post.id: scored_post.post
+                for scored_post in all_scored_posts
+            },
             voice_selections=[
                 VoiceSelection(post_id=c.post.id) for c in voice_candidates
             ],
             knowledge_selections=[
                 KnowledgeSelection(post_id=c.post.id) for c in knowledge_candidates
             ],
+            target_word_count=target_word_count,
         )
 
     def _hybrid_search(
