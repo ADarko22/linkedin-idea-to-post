@@ -11,7 +11,6 @@ Defines the `Post` class, representing a LinkedIn post.
 
 | Attribute    | Description                                                                              |
 |--------------|------------------------------------------------------------------------------------------|
-| **title**    | The post's title.                                                                        |
 | **body**     | The post's textual content.                                                              |
 | **topics**   | The post's textual content.                                                              |
 | **Metadata** | Additional information associated with the post, such as timestamps, origin, and status. |

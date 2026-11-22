@@ -40,7 +40,7 @@ def test_save_same_id_twice_updates_the_post(
     in_memory_post_storage, sample_post
 ) -> None:
     in_memory_post_storage.save(sample_post)
-    updated_post = sample_post.model_copy(update={"title": "Updated Title"})
+    updated_post = sample_post.model_copy(update={"body": "Updated Body"})
     in_memory_post_storage.save(updated_post)
     post = in_memory_post_storage.get(sample_post.id)
     assert post == updated_post

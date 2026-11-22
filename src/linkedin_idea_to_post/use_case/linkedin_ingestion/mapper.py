@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import ParamSpec, TypeVar
 
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
-from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
+from linkedin_idea_to_post.domain.post_helpers import extract_hashtags
 from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
     FieldError,
     MappingErrorCode,
@@ -136,11 +136,7 @@ def raw_post_to_post(raw_post: RawPost) -> Post:
     body = collector.capture(
         function=extract_sanitized_body, share_commentary=raw_post.share_commentary
     )
-    title = (
-        collector.capture(function=extract_title, raw_body=body)
-        if body is not None
-        else None
-    )
+
     topics = (
         collector.capture(function=extract_hashtags, raw_body=body)
         if body is not None
@@ -153,14 +149,12 @@ def raw_post_to_post(raw_post: RawPost) -> Post:
         post_uuid is not None
         and post_datetime is not None
         and body is not None
-        and title is not None
         and topics is not None
     )
 
     return Post(
         id=post_uuid,
         url=raw_post.share_link,
-        title=title,
         body=body,
         topics=topics,
         origin=PostOrigin.HUMAN,

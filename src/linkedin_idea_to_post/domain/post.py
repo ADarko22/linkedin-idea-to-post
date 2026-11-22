@@ -30,7 +30,6 @@ class PostOrigin(StrEnum):
 class Post(UtcAwareBaseModel):
     id: UUID
     url: str | None
-    title: str
     body: str
     topics: set[str]
     origin: PostOrigin

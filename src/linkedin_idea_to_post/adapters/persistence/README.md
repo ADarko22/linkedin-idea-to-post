@@ -26,7 +26,7 @@ Semantic Search.
 #### FTS5 - Full-Text Search
 
 [SQLite FTS5](https://sqlite.org/fts5.html) provides lexical full-text search via an inverted index over `Post`
-properties (`title`, `body`, `topics`), ranked by the [BM25](https://sqlite.org/fts5.html#the_bm25_function) algorithm
+properties (`body`, `topics`), ranked by the [BM25](https://sqlite.org/fts5.html#the_bm25_function) algorithm
 (term frequency, inverse document frequency, and field-length normalization).
 
 The implementation chosen uses [contentless tables](https://sqlite.org/fts5.html#contentless_tables) for the Full-Text

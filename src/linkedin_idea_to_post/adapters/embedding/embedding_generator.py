@@ -45,7 +45,7 @@ class PyTorchEmbeddingGenerator(EmbeddingGenerator):
         self._timestamp_provider = timestamp_provider
 
     def generate(self, post: Post) -> PostEmbedding:
-        # embedding only post body (title and topics are metadata extracted from the body)
+        # embedding only post body
         embeddings = self._sentence_transformer.encode(post.body, convert_to_numpy=True)
         embedding_vector = np.asarray(embeddings, dtype=np.float32).tolist()
         now = self._timestamp_provider()

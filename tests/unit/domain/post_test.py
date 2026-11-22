@@ -18,7 +18,6 @@ def test_utc_time_conversion_success() -> None:
     post = Post(
         id=UUID(int=2),
         url="https://www.linkedin.com/test_url",
-        title="Test Post",
         body="This is a test post.",
         topics={"test", "post"},
         origin=PostOrigin.HUMAN,
@@ -44,7 +43,6 @@ def test_utc_time_conversion_rejects_naive() -> None:
         Post(
             id=UUID(int=2),
             url="https://www.linkedin.com/test_url",
-            title="Test Post",
             body="This is a test post.",
             topics={"test", "post"},
             origin=PostOrigin.HUMAN,

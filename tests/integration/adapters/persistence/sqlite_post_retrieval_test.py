@@ -11,12 +11,10 @@ from linkedin_idea_to_post.domain.retrieval import (
 @pytest.fixture
 def seeded_posts(post_factory, in_memory_post_storage) -> tuple[Post, Post]:
     post1 = post_factory(
-        title="Quality of Life is important.",
         body="Having a good life, healthy food and active days is more important than a high paid 9 to 6 job.",
         topics={"quality_of_life", "healthy_food", "active_days", "job"},
     )
     post2 = post_factory(
-        title="Job satisfaction is important.",
         body="Having a good job that makes you happy is more important than a high paid 9 to 6 job.",
         topics={"satisfaction", "job"},
     )
@@ -60,8 +58,7 @@ def test_insert_trigger_indexes_topics_via_json_each(
 ) -> None:
     """Verifies AFTER INSERT trigger extracts and indexes JSON array elements in $.topics."""
     post = post_factory(
-        title="Deployment Lessons",
-        body="Measure p99 latency before scaling nodes.",
+        body="Measure p99 latency before scaling nodes.\n#observability #kuberneter",
         topics={"observability", "kubernetes"},
     )
     in_memory_post_storage.save(post)
@@ -77,8 +74,7 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
 ) -> None:
     """Verifies AFTER UPDATE trigger executes FTS5 'delete' for OLD values and inserts NEW values."""
     post = post_factory(
-        title="Monolith Architecture",
-        body="Running a single Java JAR on bare metal.",
+        body="Running a single Java JAR on bare metal.\n#java #monolith",
         topics={"java", "monolith"},
     )
     in_memory_post_storage.save(post)
@@ -89,8 +85,7 @@ def test_update_trigger_purges_old_terms_and_indexes_new_terms(
 
     updated_post = post.model_copy(
         update={
-            "title": "Event Streaming",
-            "body": "Building pipelines with Apache Kafka.",
+            "body": "Building pipelines with Apache Kafka. #kafka #streaming",
             "topics": {"kafka", "streaming"},
         }
     )
@@ -122,8 +117,7 @@ def test_delete_trigger_removes_document_from_index(
 ) -> None:
     """Verifies AFTER DELETE trigger removes the row from posts_fts."""
     post = post_factory(
-        title="Terraform Modules",
-        body="Managing cloud state safely.",
+        body="Managing cloud state safely. #terraform",
         topics={"terraform"},
     )
     in_memory_post_storage.save(post)
@@ -173,7 +167,7 @@ def test_semantic_search_ranks_most_similar_post_first(
         in_memory_embedding_storage.save(emb2)
 
     query_embedding = embedding_generator.generate(
-        post1.model_copy(update={"title": query_text, "body": query_text})
+        post1.model_copy(update={"body": query_text})
     )
     query = VectorPostSearchQuery(
         search_text_embedding=TextEmbedding(

@@ -11,7 +11,6 @@ _SCHEMA_SQL = """
 
     -- 2. Derived FTS5 Search Index
     CREATE VIRTUAL TABLE IF NOT EXISTS posts_fts USING fts5(
-        title,
         body,
         topics,
         content='',
@@ -21,10 +20,9 @@ _SCHEMA_SQL = """
     -- 3. Synchronization Triggers
     CREATE TRIGGER IF NOT EXISTS update_posts_fts_after_insert_on_posts AFTER INSERT ON posts
     BEGIN
-        INSERT INTO posts_fts (rowid, title, body, topics)
+        INSERT INTO posts_fts (rowid, body, topics)
         VALUES (
             NEW.rowid,
-            json_extract(NEW.doc, '$.title'),
             json_extract(NEW.doc, '$.body'),
             (SELECT group_concat(value, ' ') FROM json_each(NEW.doc, '$.topics'))
         );
@@ -32,11 +30,10 @@ _SCHEMA_SQL = """
 
     CREATE TRIGGER IF NOT EXISTS update_posts_fts_after_delete_on_posts AFTER DELETE ON posts
     BEGIN
-        INSERT INTO posts_fts (posts_fts, rowid, title, body, topics)
+        INSERT INTO posts_fts (posts_fts, rowid, body, topics)
         VALUES (
             'delete',
             OLD.rowid,
-            json_extract(OLD.doc, '$.title'),
             json_extract(OLD.doc, '$.body'),
             (SELECT group_concat(value, ' ') FROM json_each(OLD.doc, '$.topics'))
         );
@@ -44,18 +41,16 @@ _SCHEMA_SQL = """
 
     CREATE TRIGGER IF NOT EXISTS update_posts_fts_after_update_on_posts AFTER UPDATE ON posts
     BEGIN
-        INSERT INTO posts_fts (posts_fts, rowid, title, body, topics)
+        INSERT INTO posts_fts (posts_fts, rowid, body, topics)
         VALUES (
             'delete',
             OLD.rowid,
-            json_extract(OLD.doc, '$.title'),
             json_extract(OLD.doc, '$.body'),
             (SELECT group_concat(value, ' ') FROM json_each(OLD.doc, '$.topics'))
         );
-        INSERT INTO posts_fts (rowid, title, body, topics)
+        INSERT INTO posts_fts (rowid, body, topics)
         VALUES (
             NEW.rowid,
-            json_extract(NEW.doc, '$.title'),
             json_extract(NEW.doc, '$.body'),
             (SELECT group_concat(value, ' ') FROM json_each(NEW.doc, '$.topics'))
         );

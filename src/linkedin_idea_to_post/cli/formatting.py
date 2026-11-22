@@ -61,9 +61,10 @@ def render_post_panel(
     border_style: str = "cyan",
 ) -> None:
     content = (
-        f"[dim]ID: {post.id} | Origin: {post.origin} | Status: {post.status}[/dim]\n"
-        f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n\n"
-        f"[bold yellow]{post.title}[/bold yellow]\n\n{post.body}"
+        f"[dim]ID: {post.id}[/dim]\n"
+        f"[dim]Created: {post.created_at} | Updated: {post.updated_at}[/dim]\n"
+        f"[dim]Origin: {post.origin} | Status: {post.status}[/dim]\n\n"
+        f"{post.body}"
     )
     console.print(Panel(content, title=title, border_style=border_style))
 

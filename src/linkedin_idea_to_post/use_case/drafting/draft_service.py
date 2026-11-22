@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from linkedin_idea_to_post.domain.drafting import Draft, DraftRequest, DraftWriter
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
-from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
+from linkedin_idea_to_post.domain.post_helpers import extract_hashtags
 from linkedin_idea_to_post.use_case.post_management.post_post_management_service import (
     PostStoreManagementService,
 )
@@ -27,7 +27,6 @@ class DraftService:
     def draft(self, draft_request: DraftRequest) -> Post:
         draft = self.compose(draft_request)
 
-        post_title = extract_title(draft.generated_content)
         post_id = uuid.uuid5(uuid.NAMESPACE_URL, draft_request.idea)
         topics = extract_hashtags(draft.generated_content)
         now = self.timestamp_provider()
@@ -35,7 +34,6 @@ class DraftService:
         draft_post = Post(
             id=post_id,
             url=None,
-            title=post_title,
             body=draft.generated_content,
             topics=topics,
             status=PostStatus.DRAFT,

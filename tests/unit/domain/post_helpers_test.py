@@ -1,32 +1,6 @@
 import pytest
 
-from linkedin_idea_to_post.domain.post_helpers import extract_hashtags, extract_title
-
-
-###############################################################################################################
-# Extract Title from sanitized body
-@pytest.mark.parametrize(
-    "raw_body, expected_title",
-    [
-        ("Some potential title.", "Some potential title."),
-        (
-            "Some potential title which is too long and must be capped at a whitespace.",
-            "Some potential title which is too long and must",
-        ),
-        (
-            """Some potential capped at newline.
-                    This is a continuation.
-                    """,
-            "Some potential capped at newline.",
-        ),
-        (
-            "Some-potential-title_which_is__too-long-and-must-be-capped-at-size-match",
-            "Some-potential-title_which_is__too-long-and-must-b",
-        ),
-    ],
-)
-def test_extract_title(raw_body: str, expected_title: str) -> None:
-    assert extract_title(raw_body) == expected_title
+from linkedin_idea_to_post.domain.post_helpers import extract_hashtags
 
 
 ###############################################################################################################
@@ -41,9 +15,9 @@ def test_extract_title(raw_body: str, expected_title: str) -> None:
         ),
         (
             """
-                Some formatted text.
-                With some valid and invalid hashtags. #python.#coding #unit-test #unit_test
-                """,
+                    Some formatted text.
+                    With some valid and invalid hashtags. #python.#coding #unit-test #unit_test
+                    """,
             {"python", "coding", "unit_test"},
         ),
         ("no hashtags", set()),
