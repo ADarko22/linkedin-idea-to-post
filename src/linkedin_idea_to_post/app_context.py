@@ -24,7 +24,7 @@ from linkedin_idea_to_post.adapters.persistence.sqlite_post_storage import (
 from linkedin_idea_to_post.adapters.persistence.sqllite_unit_of_work import (
     SqliteUnitOfWork,
 )
-from linkedin_idea_to_post.config import AppConfig
+from linkedin_idea_to_post.config import AppConfig, ensure_app_dirs
 from linkedin_idea_to_post.use_case.drafting.draft_context_service import (
     DraftContextService,
 )
@@ -35,6 +35,18 @@ from linkedin_idea_to_post.use_case.post_management.post_post_management_service
     PostStoreManagementService,
 )
 
+_CACHED_SERVICE_ATTRS: tuple[str, ...] = (
+    "unit_of_work",
+    "post_storage",
+    "embedding_storage",
+    "retriever",
+    "embedding_generator",
+    "post_store_manager",
+    "draft_context_service",
+    "draft_service",
+    "csv_importer",
+)
+
 
 @dataclass
 class AppContext:
@@ -43,6 +55,9 @@ class AppContext:
     config: AppConfig
     offline: bool = False
     _db_connection: sqlite3.Connection | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        ensure_app_dirs(self.config)
 
     @property
     def db_connection(self) -> sqlite3.Connection:
@@ -103,10 +118,32 @@ class AppContext:
             post_store_manager=self.post_store_manager,
         )
 
+    def _invalidate_cached_services(self) -> None:
+        for attr in _CACHED_SERVICE_ATTRS:
+            self.__dict__.pop(attr, None)
+
     def close(self) -> None:
         if self._db_connection is not None:
-            self._db_connection.close()
-            self._db_connection = None
+            try:
+                self._db_connection.close()
+            except sqlite3.ProgrammingError:
+                # Connection belongs to another thread; drop reference so GC/owner handles cleanup
+                pass
+            finally:
+                self._db_connection = None
+        self._invalidate_cached_services()
+
+    def reload_config(self, new_config: AppConfig) -> None:
+        if self._db_connection is not None:
+            try:
+                self._db_connection.close()
+            except sqlite3.ProgrammingError:
+                pass
+            finally:
+                self._db_connection = None
+        self._invalidate_cached_services()
+        ensure_app_dirs(new_config)
+        self.config = new_config
 
 
 def build_app_context(*, offline: bool = False) -> AppContext:

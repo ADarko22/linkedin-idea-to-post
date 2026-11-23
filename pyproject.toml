@@ -10,18 +10,26 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.5.1",
     "crewai[google-genai]~=1.15.0",
-    "npt>=0.8.1",
+    "nicegui>=4.0.0",
     "numpy>=1.24.0",
+    "platformdirs>=4.2.0",
     "pydantic>=2.11.9,<2.13",
     "pydantic-settings>=2.16.2",
     "rich<15.0.0",
-    "ruff>=0.17.5",
     "sentence-transformers>=2.2.0",
     "torch>=2.0.0",
 ]
 
+[project.urls]
+Repository = "https://github.com/ADarko22/linkedin-idea-to-post"
+Issues = "https://github.com/ADarko22/linkedin-idea-to-post/issues"
+
 [project.scripts]
-li2p = "linkedin_idea_to_post.cli.app:cli"
+li2p = "linkedin_idea_to_post.ui.cli.app:cli"
+li2p-gui = "linkedin_idea_to_post.ui.gui.app:main"
+
+[tool.setuptools.package-data]
+linkedin_idea_to_post = ["config.toml"]
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
@@ -39,6 +47,8 @@ dev = [
 # mypy:  static type checking
 [tool.mypy]
 python_version = 3.12
+mypy_path = "src"
+explicit_package_bases = true
 warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
