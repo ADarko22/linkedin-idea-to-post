@@ -19,6 +19,7 @@ from linkedin_idea_to_post.cli.formatting import (
 )
 from linkedin_idea_to_post.config import ConfigurationError
 from linkedin_idea_to_post.domain.drafting import DraftRequest
+from linkedin_idea_to_post.domain.post_helpers import post_from_draft
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 
 console = Console()
@@ -82,11 +83,13 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
             draft_context = app.draft_context_service.create_context(idea=idea)
             draft_request = DraftRequest(idea=idea, context=draft_context)
 
+            draft_post = app.draft_service.compose(draft_request)
+
             if dry_run:
-                draft_post = app.draft_service.compose(draft_request)
                 render_dry_run_draft(console, draft_post.generated_content)
             else:
-                post = app.draft_service.draft(draft_request)
+                post = post_from_draft(draft_post)
+                app.post_store_manager.save_post(post)
                 render_post_panel(console, post, title="Generated Post")
         except ConfigurationError as exc:
             _handle_config_error(exc)

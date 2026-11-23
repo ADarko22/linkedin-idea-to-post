@@ -7,10 +7,7 @@ from tests.fake_draft_writer import FakeDraftWriter
 
 @pytest.fixture
 def draft_service(in_memory_post_store_manager):
-    return DraftService(
-        writer=FakeDraftWriter(),
-        post_store_manager=in_memory_post_store_manager,
-    )
+    return DraftService(writer=FakeDraftWriter())
 
 
 @pytest.fixture
@@ -42,15 +39,3 @@ def test_compose_creates_draft(
 
     assert draft.generated_content == expected_body
     assert len(in_memory_post_storage.get_all(PostGetQuery())) == 0
-
-
-def test_draft_saves_drafted_post(
-    draft_service,
-    in_memory_post_storage,
-    sample_draft_request,
-    expected_body,
-):
-    post = draft_service.draft(sample_draft_request)
-
-    assert post.body == expected_body
-    assert in_memory_post_storage.get(post.id) == post

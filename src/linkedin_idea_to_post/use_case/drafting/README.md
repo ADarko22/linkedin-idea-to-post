@@ -57,7 +57,6 @@ sequenceDiagram
     actor User
     participant Drafter as DraftService
     participant Writer as DraftWriter
-    participant Store as PostStoreManagementService
     Note over User, Writer: Compose Draft Operation
     User ->> Drafter: compose(draft_request)
     activate Drafter
@@ -67,21 +66,6 @@ sequenceDiagram
     Writer ->> Drafter: Draft
     deactivate Writer
     Drafter ->> User: Draft
-    deactivate Drafter
-    Note over User, Store: Draft Post Operation
-    User ->> Drafter: draft(draft_request)
-    activate Drafter
-    Drafter ->> Writer: write(DraftRequest)
-    activate Writer
-    Note over Writer: Process DraftRequest into a Draft
-    Writer ->> Drafter: Draft
-    deactivate Writer
-    Note over Drafter: Transform Draft to a Post
-    Drafter ->> Store: save(Post)
-    activate Store
-    Note over Store: Compute Embeddings and Store
-    deactivate Store
-    Drafter ->> User: Post
     deactivate Drafter
 ```
 

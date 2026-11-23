@@ -94,7 +94,6 @@ class AppContext:
         writer = CrewaiDraftWriter(llm=llm)
         return DraftService(
             writer=writer,
-            post_store_manager=self.post_store_manager,
         )
 
     @cached_property
