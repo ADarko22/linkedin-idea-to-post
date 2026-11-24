@@ -21,7 +21,7 @@ def matrix_vector_cosine_similarity(
         return np.array([], dtype=np.float32)
 
     query_norm = np.linalg.norm(query_vector)
-    if query_norm == 0.0:
+    if np.isclose(query_norm, 0.0, atol=1e-12):
         return np.zeros(matrix.shape[0], dtype=np.float32)
 
     row_norms = np.linalg.norm(matrix, axis=1)

@@ -70,8 +70,8 @@ def extract_sanitized_body(share_commentary: str) -> str:
         # Strip leading quotes
         line = re.sub(r'^["“”]+', "", line).strip()
 
-        # Strip trailing quotes
-        line = re.sub(r'["“”]+$', "", line).strip()
+        # Strip trailing quotes: the Negative lookbehind (prevents quadratic backtracking)
+        line = re.sub(r'(?<!["“”])["“”]+$', "", line).strip()
 
         if line:
             processed_lines.append(line)
