@@ -54,6 +54,7 @@ jobs:
             -Dsonar.tests=tests
             -Dsonar.python.version=3.12
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.coverage.exclusions=**/ui/**
 
   packaging-smoke-test:
     runs-on: ubuntu-latest

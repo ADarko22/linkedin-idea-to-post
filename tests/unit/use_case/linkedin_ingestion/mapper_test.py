@@ -144,6 +144,6 @@ def test_raw_post_to_post_success(sample_raw_post, sample_post):
 
 
 def test_raw_post_to_post_failure(raw_post_factory):
+    malformed_raw_post = raw_post_factory(date="01-01-2026 10:10:11")
     with pytest.raises(MappingFailure):
-        malformed_raw_post = raw_post_factory(date="01-01-2026 10:10:11")
         raw_post_to_post(malformed_raw_post)
