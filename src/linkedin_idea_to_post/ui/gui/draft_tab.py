@@ -10,15 +10,17 @@ from linkedin_idea_to_post.app_context import AppContext
 from linkedin_idea_to_post.domain.drafting import (
     Draft,
     DraftContext,
+    DraftGenerationError,
     DraftRequest,
     KnowledgeSelection,
     KnowledgeStance,
     VoiceSelection,
-    VoiceTuning, DraftGenerationError,
+    VoiceTuning,
 )
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import post_from_draft
 from linkedin_idea_to_post.domain.storage import PostGetQuery
+from linkedin_idea_to_post.ui.gui import styles
 from linkedin_idea_to_post.ui.gui.helpers import (
     format_hashtags,
     post_short_preview,
@@ -58,155 +60,110 @@ class _State:
 
 
 def _limits(ctx: AppContext) -> tuple[int, int]:
-    v = int(ctx.config.drafting.voice_examples_count)
-    k = int(ctx.config.drafting.knowledge_examples_count)
-    return v, k
+    return (
+        int(ctx.config.drafting.voice_examples_count),
+        int(ctx.config.drafting.knowledge_examples_count),
+    )
 
 
 def build_draft_tab(ctx: AppContext) -> None:
     st = _State()
     v_lim, k_lim = _limits(ctx)
 
-    # --- Top Overlay: Read Single Post From Search ---
     read_dialog = ui.dialog().props("backdrop-filter='blur(3px)'")
-    with (
-        read_dialog,
-        ui.card().classes("w-full max-w-2xl q-pa-md gap-3 overflow-x-hidden"),
-    ):
-        with ui.row().classes("w-full items-center justify-between"):
-            ui.label("Post Content").classes("text-subtitle1 text-weight-bold")
-            ui.button(icon="close", on_click=read_dialog.close).props(
-                "flat round dense"
-            )
-        read_tags = ui.label("").classes(
-            "text-caption text-primary whitespace-normal break-words"
-        )
-        with ui.scroll_area().classes(
-            "w-full h-72 border rounded q-pa-sm overflow-x-hidden"
-        ):
-            read_body = ui.label("").classes(
-                "text-body2 whitespace-pre-line break-words"
-            )
+    with read_dialog, styles.dialog_card("max-w-2xl"):
+        styles.modal_header("Post Content", read_dialog.close)
+        read_tags = styles.tags_label("")
+        with styles.scroll_box("h-72", "overflow-x-hidden"):
+            read_body = styles.post_body_label("")
         read_actions = ui.row().classes("w-full justify-end gap-2")
 
-    # --- Context Overlay: Search & Tune Voices / Knowledge ---
     ctx_dialog = ui.dialog().props("backdrop-filter='blur(2px)'")
-    with (
-        ctx_dialog,
-        ui.card().classes("w-full max-w-5xl q-pa-md gap-3 overflow-x-hidden"),
-    ):
-        with ui.row().classes("w-full items-center justify-between gap-2 flex-wrap"):
-            with ui.row().classes("items-center gap-2"):
+    with ctx_dialog, styles.dialog_card("max-w-5xl"):
+        with styles.row_between("gap-2 flex-wrap"):
+            with styles.row_gap_2():
                 ui.icon("tune", size="md", color="primary")
-                ui.label("Context & Tuning").classes("text-subtitle1 text-weight-bold")
-            with ui.row().classes("items-center gap-2"):
+                styles.section_title("Context & Tuning")
+            with styles.row_gap_2():
                 v_badge = ui.badge(f"Voice 0/{v_lim}", color="blue-grey")
                 k_badge = ui.badge(f"Knowledge 0/{k_lim}", color="blue-grey")
-                ui.button(
+                styles.positive_button(
                     "Apply & Close",
                     icon="check_circle",
-                    color="positive",
                     on_click=ctx_dialog.close,
-                ).props("dense unelevated")
+                    unelevated=True,
+                )
 
-        search_input = (
-            ui.input(
-                "Search archive (up to 15)", placeholder="Keywords or #hashtags..."
-            )
-            .props("outlined dense clearable")
-            .classes("w-full")
+        search_input = styles.outlined_input(
+            "Search archive (up to 15)", placeholder="Keywords or #hashtags..."
         )
         with search_input.add_slot("prepend"):
             ui.icon("search", color="primary")
 
-        search_panel = ui.column().classes(
-            "w-full border rounded bg-grey-1 q-pa-xs gap-1"
-        )
+        search_panel = ui.column().classes("w-full border rounded bg-grey-1 q-pa-xs gap-1")
         search_panel.set_visibility(False)
         with search_panel:
-            search_info = ui.label("").classes("text-caption text-grey-8 px-1")
-            search_box = ui.column().classes(
-                "w-full max-h-60 overflow-y-auto gap-1.5 pr-1"
-            )
+            search_info = styles.muted_caption("", "text-grey-8 px-1")
+            search_box = ui.column().classes("w-full max-h-60 overflow-y-auto gap-1.5 pr-1")
 
-        with ui.scroll_area().classes(
-            "w-full h-[72vh] min-h-80 border rounded q-pa-sm overflow-x-hidden"
+        with (
+            styles.scroll_box("h-[72vh]", "min-h-80 overflow-x-hidden"),
+            ui.column().classes("w-full gap-3 overflow-x-hidden"),
         ):
-            with ui.column().classes("w-full gap-3 overflow-x-hidden"):
-                ui.label("Voices").classes("text-subtitle2 text-weight-bold")
-                voices_box = ui.column().classes("w-full gap-2")
-                ui.separator()
-                ui.label("Knowledge").classes("text-subtitle2 text-weight-bold")
-                knowledge_box = ui.column().classes("w-full gap-2")
-
-    # --- Main View: Idea & Draft ---
-    with ui.column().classes("w-full max-w-4xl mx-auto gap-3 overflow-x-hidden"):
-        with ui.card().classes("w-full q-pa-md gap-3 overflow-x-hidden"):
-            with ui.row().classes(
-                "w-full items-center justify-between gap-2 flex-wrap"
-            ):
-                ui.label("Idea & Draft").classes("text-subtitle1 text-weight-bold")
-                with ui.row().classes("items-center gap-2"):
-                    status_lbl = ui.label("").classes("text-caption text-grey-7")
-                    ctx_chip = ui.badge(
-                        f"Context: 0/{v_lim} V · 0/{k_lim} K", color="blue-grey"
-                    ).classes("cursor-pointer")
-                    ctx_chip.on("click", ctx_dialog.open)
-                    ui.button(icon="tune", on_click=ctx_dialog.open).props(
-                        "flat dense round size=sm color=primary"
-                    ).tooltip("Tune Context")
-
-            idea_area = (
-                ui.textarea("Idea", placeholder="Write your idea or angle...")
-                .props("outlined rows=3")
-                .classes("w-full")
-            )
-
-            with ui.row().classes(
-                "w-full items-center justify-between gap-3 flex-wrap"
-            ):
-                words_input = (
-                    ui.number("Target words", value=220, min=50, max=1500, step=25)
-                    .props("outlined dense")
-                    .classes("w-36")
-                )
-                with ui.row().classes("items-center gap-2 flex-wrap"):
-                    build_btn = ui.button(
-                        "Build Context", icon="auto_awesome", color="primary"
-                    )
-                    gen_btn = ui.button(
-                        "Generate Draft", icon="edit_note", color="secondary"
-                    )
-
-            history_row = ui.row().classes("w-full items-center gap-1 flex-wrap")
-            history_row.set_visibility(False)
-
+            styles.section_title("Voices", small=True)
+            voices_box = ui.column().classes("w-full gap-2")
             ui.separator()
+            styles.section_title("Knowledge", small=True)
+            knowledge_box = ui.column().classes("w-full gap-2")
 
-            editor = (
-                ui.textarea("Draft", placeholder="Generated draft appears here...")
-                .props("outlined rows=10")
-                .classes("w-full")
+    with styles.narrow_column("overflow-x-hidden"), styles.card_panel("overflow-x-hidden"):
+        with styles.row_between("gap-2 flex-wrap"):
+            styles.section_title("Idea & Draft")
+            with styles.row_gap_2():
+                status_lbl = styles.muted_caption("")
+                ctx_chip = ui.badge(
+                    f"Context: 0/{v_lim} V · 0/{k_lim} K", color="blue-grey"
+                ).classes("cursor-pointer")
+                ctx_chip.on("click", ctx_dialog.open)
+                styles.flat_button(
+                    icon="tune",
+                    on_click=ctx_dialog.open,
+                    extra_props="round size=sm color=primary",
+                ).tooltip("Tune Context")
+
+        idea_area = styles.outlined_textarea(
+            "Idea", placeholder="Write your idea or angle...", rows=3
+        )
+
+        with styles.row_between("flex-wrap"):
+            words_input = (
+                ui.number("Target words", value=220, min=50, max=1500, step=25)
+                .props("outlined dense")
+                .classes("w-36")
             )
+            with styles.row_gap_2("flex-wrap"):
+                build_btn = styles.primary_button("Build Context", icon="auto_awesome")
+                gen_btn = ui.button("Generate Draft", icon="edit_note", color="secondary")
 
-            with ui.row().classes(
-                "w-full items-center justify-between gap-2 flex-wrap"
-            ):
-                use_idea_btn = ui.button("Use Draft as Idea", icon="north_west").props(
-                    "outline dense"
+        history_row = styles.row_gap_2("w-full flex-wrap")
+        history_row.set_visibility(False)
+        ui.separator()
+
+        editor = styles.outlined_textarea(
+            "Draft", placeholder="Generated draft appears here...", rows=10
+        )
+
+        with styles.row_between("gap-2 flex-wrap"):
+            use_idea_btn = styles.outline_button("Use Draft as Idea", icon="north_west")
+            use_idea_btn.set_enabled(False)
+            with styles.row_gap_2("flex-wrap"):
+                save_draft_btn = styles.outline_button(
+                    "Save as DRAFT", icon="save", dense=False
                 )
-                use_idea_btn.set_enabled(False)
-                with ui.row().classes("items-center gap-2 flex-wrap"):
-                    save_draft_btn = ui.button("Save as DRAFT", icon="save").props(
-                        "outline"
-                    )
-                    save_pub_btn = ui.button(
-                        "Save as PUBLISHED", icon="publish", color="positive"
-                    )
-                    save_draft_btn.set_enabled(False)
-                    save_pub_btn.set_enabled(False)
+                save_pub_btn = styles.positive_button("Save as PUBLISHED", icon="publish")
+                save_draft_btn.set_enabled(False)
+                save_pub_btn.set_enabled(False)
 
-    # --- Helpers ---
     def items_for(role: Role) -> list[_CtxItem]:
         return st.voice if role == "voice" else st.knowledge
 
@@ -252,7 +209,7 @@ def build_draft_tab(ctx: AppContext) -> None:
             return
         history_row.set_visibility(True)
         with history_row:
-            ui.label("History:").classes("text-caption text-grey-7 q-mr-xs")
+            styles.muted_caption("History:", "q-mr-xs")
             for idx, entry in enumerate(st.history):
                 active = idx == st.active
                 lbl = f"#{idx + 1}" + (" ✓" if entry.saved else "")
@@ -264,9 +221,9 @@ def build_draft_tab(ctx: AppContext) -> None:
                     render_history()
                     sync_status()
 
-                ui.button(
-                    lbl, on_click=pick, color="primary" if active else None
-                ).props("dense unelevated" if active else "dense outline")
+                ui.button(lbl, on_click=pick, color="primary" if active else None).props(
+                    "dense unelevated" if active else "dense outline"
+                )
 
     def _add_and_close(post: Post, role: Role) -> None:
         add_manual(post, role)
@@ -323,74 +280,60 @@ def build_draft_tab(ctx: AppContext) -> None:
                     if manual
                     else "border-l-4 border-grey-5"
                 )
-                with ui.card().classes(f"w-full q-pa-xs overflow-x-hidden {accent}"):
-                    with ui.row().classes("w-full items-start gap-2 flex-nowrap"):
-                        cb = ui.checkbox(value=item.selected).classes("shrink-0 mt-1")
-                        cb.on_value_change(
-                            lambda e, t=item, c=cb: toggle_sel(t, bool(e.value), c)
+                with (
+                    ui.card().classes(f"w-full q-pa-xs overflow-x-hidden {accent}"),
+                    ui.row().classes("w-full items-start gap-2 flex-nowrap"),
+                ):
+                    cb = ui.checkbox(value=item.selected).classes("shrink-0 mt-1")
+                    cb.on_value_change(
+                        lambda e, t=item, c=cb: toggle_sel(t, bool(e.value), c)
+                    )
+                    exp = ui.expansion().classes("col min-w-[200px]")
+                    with exp.add_slot("header"), styles.row_between("gap-2 py-1"):
+                        prev = styles.post_preview_label(
+                            post_short_preview(item.post), "whitespace-normal col"
                         )
-                        exp = ui.expansion().classes("col min-w-[200px]")
-                        with exp.add_slot("header"):
-                            with ui.row().classes(
-                                "w-full items-center justify-between gap-2 py-1"
-                            ):
-                                prev = ui.label(post_short_preview(item.post)).classes(
-                                    "text-body2 whitespace-normal break-words col"
-                                )
-                                prev.bind_visibility_from(
-                                    exp, "value", backward=lambda v: not v
-                                )
-                                ui.badge(
-                                    "Added" if manual else "Suggested",
-                                    color="teal" if manual else "grey-7",
-                                ).classes("shrink-0")
+                        prev.bind_visibility_from(exp, "value", backward=lambda v: not v)
+                        ui.badge(
+                            "Added" if manual else "Suggested",
+                            color="teal" if manual else "grey-7",
+                        ).classes("shrink-0")
 
-                        opts = (
-                            [t.value for t in VoiceTuning]
-                            if role == "voice"
-                            else [s.value for s in KnowledgeStance]
+                    opts = (
+                        [t.value for t in VoiceTuning]
+                        if role == "voice"
+                        else [s.value for s in KnowledgeStance]
+                    )
+                    val = item.tuning.value if role == "voice" else item.stance.value
+                    sel = (
+                        ui.select(
+                            opts,
+                            value=val,
+                            label="Tuning" if role == "voice" else "Stance",
                         )
-                        val = (
-                            item.tuning.value if role == "voice" else item.stance.value
+                        .props("dense outlined")
+                        .classes("w-44 shrink-0")
+                    )
+                    attr = "tuning" if role == "voice" else "stance"
+                    enum_cls = VoiceTuning if role == "voice" else KnowledgeStance
+                    sel.on_value_change(
+                        lambda e, t=item, a=attr, cls=enum_cls: setattr(
+                            t, a, cls(str(e.value))
                         )
-                        sel = (
-                            ui.select(
-                                opts,
-                                value=val,
-                                label="Tuning" if role == "voice" else "Stance",
-                            )
-                            .props("dense outlined")
-                            .classes("w-44 shrink-0")
-                        )
-                        if role == "voice":
-                            sel.on_value_change(
-                                lambda e, t=item: setattr(
-                                    t, "tuning", VoiceTuning(str(e.value))
-                                )
-                            )
-                        else:
-                            sel.on_value_change(
-                                lambda e, t=item: setattr(
-                                    t, "stance", KnowledgeStance(str(e.value))
-                                )
-                            )
+                    )
 
-                        ui.button(
-                            icon="delete", on_click=lambda _, t=item: remove_item(t)
-                        ).props("flat dense round size=sm color=negative").tooltip(
-                            "Remove"
-                        ).classes("shrink-0 mt-1")
+                    styles.flat_button(
+                        icon="delete",
+                        on_click=lambda _, t=item: remove_item(t),
+                        extra_props="round size=sm color=negative",
+                    ).tooltip("Remove").classes("shrink-0 mt-1")
 
-                        with exp, ui.column().classes("w-full q-pa-sm pt-1 gap-1.5"):
-                            ui.separator()
-                            tags = format_hashtags(item.post)
-                            if tags:
-                                ui.label(tags).classes(
-                                    "text-caption text-primary whitespace-normal break-words"
-                                )
-                            ui.label(item.post.body).classes(
-                                "text-body2 whitespace-pre-line break-words"
-                            )
+                    with exp, ui.column().classes("w-full q-pa-sm pt-1 gap-1.5"):
+                        ui.separator()
+                        tags = format_hashtags(item.post)
+                        if tags:
+                            styles.tags_label(tags)
+                        styles.post_body_label(item.post.body)
 
     def add_manual(post: Post, role: Role) -> None:
         st.context.relevant_posts[post.id] = post
@@ -469,30 +412,28 @@ def build_draft_tab(ctx: AppContext) -> None:
         )
         with search_box:
             for p in matches:
-                with ui.card().classes(
-                    "w-full shrink-0 q-px-sm q-py-xs bg-white overflow-visible"
+                with (
+                    ui.card().classes(
+                        "w-full shrink-0 q-px-sm q-py-xs bg-white overflow-visible"
+                    ),
+                    styles.row_between("gap-2 flex-wrap overflow-visible"),
                 ):
-                    with ui.row().classes(
-                        "w-full items-center justify-between gap-2 flex-wrap overflow-visible"
-                    ):
-                        preview = ui.label(post_short_preview(p)).classes(
-                            "text-body2 text-grey-10 cursor-pointer hover:text-primary "
-                            "whitespace-normal break-words overflow-visible flex-1 min-w-[240px]"
-                        )
-                        preview.on("click", lambda _, post=p: open_reader(post))
-                        with ui.row().classes("items-center gap-1.5 shrink-0"):
-                            ui.button(
-                                "Voice",
-                                icon="add_circle",
-                                on_click=lambda _, post=p: add_manual(post, "voice"),
-                            ).props("dense outline size=sm color=primary")
-                            ui.button(
-                                "Knowledge",
-                                icon="add_circle",
-                                on_click=lambda _, post=p: add_manual(
-                                    post, "knowledge"
-                                ),
-                            ).props("dense outline size=sm color=teal")
+                    preview = styles.post_preview_label(
+                        post_short_preview(p),
+                        "text-grey-10 cursor-pointer hover:text-primary whitespace-normal overflow-visible flex-1 min-w-[240px]",
+                    )
+                    preview.on("click", lambda _, post=p: open_reader(post))
+                    with styles.row_gap_2("gap-1.5 shrink-0"):
+                        ui.button(
+                            "Voice",
+                            icon="add_circle",
+                            on_click=lambda _, post=p: add_manual(post, "voice"),
+                        ).props("dense outline size=sm color=primary")
+                        ui.button(
+                            "Knowledge",
+                            icon="add_circle",
+                            on_click=lambda _, post=p: add_manual(post, "knowledge"),
+                        ).props("dense outline size=sm color=teal")
 
     def collect_ctx() -> DraftContext:
         rel: dict[UUID, Post] = dict(st.context.relevant_posts if st.context else {})
@@ -555,7 +496,9 @@ def build_draft_tab(ctx: AppContext) -> None:
             sync_status()
             ui.notify("Draft generated.", type="positive")
         except DraftGenerationError as exc:
-            message = exc.message or str(exc) or "Draft generation failed. Please try again."
+            message = (
+                exc.message or str(exc) or "Draft generation failed. Please try again."
+            )
             sync_status()
             ui.notify(message, type="negative")
         except Exception as exc:

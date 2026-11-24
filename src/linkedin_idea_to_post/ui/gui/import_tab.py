@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import tempfile
-from dataclasses import dataclass
+import asyncio
+from dataclasses import dataclass, field
 from pathlib import Path
+import tempfile
 
 from nicegui import events, ui
 
 from linkedin_idea_to_post.app_context import AppContext
 from linkedin_idea_to_post.domain.post import Post
+from linkedin_idea_to_post.ui.gui import styles
 from linkedin_idea_to_post.ui.gui.helpers import (
     format_hashtags,
     post_short_preview,
@@ -22,75 +24,128 @@ from linkedin_idea_to_post.use_case.linkedin_ingestion.model import (
 class _ImportState:
     prepared: CsvImporterPrepareResult | None = None
     temp_file: Path | None = None
-    last_import_message: str | None = None
+    selection_boxes: list[tuple[int, ui.checkbox]] = field(default_factory=list)
+
+
+def _write_temp_file(data: bytes | str, suffix: str) -> Path:
+    mode = "wb" if isinstance(data, bytes) else "w"
+    encoding = None if isinstance(data, bytes) else "utf-8"
+    with tempfile.NamedTemporaryFile(
+        delete=False, suffix=suffix, mode=mode, encoding=encoding
+    ) as tmp:
+        tmp.write(data)
+        return Path(tmp.name)
+
+
+def _cleanup_temp_file(state: _ImportState) -> None:
+    if state.temp_file and state.temp_file.exists():
+        state.temp_file.unlink(missing_ok=True)
+    state.temp_file = None
+
+
+def _render_errors(
+    errors_box: ui.column,
+    errors_expansion: ui.expansion,
+    res: CsvImporterPrepareResult,
+) -> None:
+    errors_box.clear()
+    total = len(res.parsing_errors) + len(res.mapping_errors)
+    errors_expansion.set_visibility(total > 0)
+    if total == 0:
+        return
+
+    errors_expansion.set_text(f"Parsing & Mapping Errors ({total})")
+    with errors_box:
+        for err in res.parsing_errors:
+            ui.label(f"Row {err.row} [{err.field}]: {err.message}").classes(
+                styles.ERROR_CAPTION
+            )
+        for m_err in res.mapping_errors:
+            for f_err in m_err.errors:
+                ui.label(
+                    f"Row {m_err.raw_post.row} [{f_err.field}]: {f_err.message}"
+                ).classes(styles.ERROR_CAPTION)
+
+
+def _render_post_card(
+    selection_boxes: list[tuple[int, ui.checkbox]], idx: int, post: Post
+) -> None:
+    with (
+        ui.card().classes("w-full q-pa-none overflow-hidden"),
+        ui.row().classes("w-full items-center no-wrap px-2"),
+    ):
+        cb = ui.checkbox(value=True).classes("shrink-0")
+        selection_boxes.append((idx, cb))
+
+        expansion = ui.expansion().classes("col min-w-0")
+        with expansion.add_slot("header"), styles.row_between("gap-2 py-1 min-w-0"):
+            label = styles.post_preview_label(
+                post_short_preview(post), "truncate col min-w-0"
+            )
+            label.bind_visibility_from(
+                expansion, "value", backward=lambda expanded: not expanded
+            )
+            if post.hashtags:
+                ui.badge(f"{len(post.hashtags)} tag(s)", color="grey-7").classes(
+                    "shrink-0"
+                )
+
+        with expansion, ui.column().classes("w-full q-pa-sm pt-0 gap-2"):
+            ui.separator()
+            tags = format_hashtags(post)
+            if tags:
+                styles.tags_label(tags)
+            styles.post_body_label(post.body)
+
+
+def _save_posts_sync(ctx: AppContext, posts: list[Post]) -> None:
+    for post in posts:
+        ctx.post_store_manager.save_post(post)
 
 
 def build_import_tab(ctx: AppContext) -> None:
     state = _ImportState()
-    selection_boxes: list[tuple[int, ui.checkbox]] = []
 
-    with ui.column().classes("w-full max-w-4xl mx-auto gap-3"):
-        # Banner shown after a successful import when returning to initial view
+    with styles.narrow_column():
         status_banner = ui.row().classes(
             "w-full items-center justify-between bg-green-1 text-green-10 "
             "q-pa-sm rounded border border-green-4"
         )
         status_banner.set_visibility(False)
         with status_banner:
-            status_banner_label = ui.label("").classes("text-body2 text-weight-medium")
-            ui.button(
+            banner_label = ui.label("").classes("text-body2 text-weight-medium")
+            styles.flat_button(
                 icon="close",
                 on_click=lambda: status_banner.set_visibility(False),
-            ).props("flat dense round size=sm")
+                extra_props="round size=sm",
+            )
 
-        # --- VIEW 1: Initial Upload / File Selection ---
-        upload_view = ui.card().classes("w-full q-pa-md gap-3")
+        upload_view = styles.card_panel()
         with upload_view:
-            ui.label("Import LinkedIn Shares CSV").classes(
-                "text-subtitle1 text-weight-bold"
-            )
-            ui.label(
+            styles.section_title("Import LinkedIn Shares CSV")
+            styles.muted_caption(
                 "Upload your LinkedIn Shares.csv export or enter a local file path to preview posts before importing."
-            ).classes("text-caption text-grey-7")
-
-            path_input = (
-                ui.input(
-                    label="Path to Shares.csv",
-                    placeholder="/path/to/Shares.csv",
-                )
-                .props("outlined dense clearable")
-                .classes("w-full")
             )
-
-            with ui.row().classes("w-full items-center justify-between gap-3 q-mt-xs"):
-                upload_widget = ui.upload(
-                    auto_upload=True,
-                    max_files=1,
-                ).props("accept=.csv flat bordered label='Choose Shares.csv'")
-
-                parse_btn = ui.button(
-                    "Parse & Preview", icon="preview", color="primary"
+            path_input = styles.outlined_input(
+                "Path to Shares.csv", placeholder="/path/to/Shares.csv"
+            )
+            with styles.row_between("q-mt-xs"):
+                upload_widget = ui.upload(auto_upload=True, max_files=1).props(
+                    "accept=.csv flat bordered label='Choose Shares.csv'"
                 )
+                parse_btn = styles.primary_button("Parse & Preview", icon="preview")
 
-        # --- VIEW 2: Parsed Preview & Selection ---
-        preview_view = ui.column().classes("w-full gap-3")
+        preview_view = styles.narrow_column()
         preview_view.set_visibility(False)
-
         with preview_view:
-            # Pinned action & summary bar
-            with ui.card().classes("w-full q-pa-sm"):
-                with ui.row().classes("w-full items-center justify-between gap-3"):
-                    summary_row = ui.row().classes("items-center gap-2")
+            with ui.card().classes("w-full q-pa-sm"), styles.row_between():
+                summary_row = styles.row_gap_2()
+                with styles.row_gap_2():
+                    select_all_btn = styles.flat_button("All")
+                    select_none_btn = styles.flat_button("None")
+                    cancel_btn = styles.outline_button("Cancel", icon="close", dense=False)
+                    import_btn = styles.positive_button("Import Selected", icon="check")
 
-                    with ui.row().classes("items-center gap-2"):
-                        select_all_btn = ui.button("All").props("flat dense")
-                        select_none_btn = ui.button("None").props("flat dense")
-                        cancel_btn = ui.button("Cancel", icon="close").props("outline")
-                        import_btn = ui.button(
-                            "Import Selected", icon="check", color="positive"
-                        )
-
-            # Collapsible errors drawer (only visible when errors exist)
             errors_expansion = ui.expansion(
                 "Parsing & Mapping Errors", icon="warning"
             ).classes("w-full bg-orange-1 rounded border border-orange-4")
@@ -98,73 +153,28 @@ def build_import_tab(ctx: AppContext) -> None:
             with errors_expansion:
                 errors_box = ui.column().classes("w-full gap-1 q-pa-sm")
 
-            # Bounded scrollable list so header & buttons stay on screen
-            with ui.scroll_area().classes(
-                "w-full h-[calc(100vh-300px)] min-h-72 border rounded q-pa-sm"
-            ):
+            with styles.scroll_box():
                 posts_box = ui.column().classes("w-full gap-2")
 
-    def _cleanup_temp_file() -> None:
-        if state.temp_file and state.temp_file.exists():
-            state.temp_file.unlink(missing_ok=True)
-        state.temp_file = None
-
-    def _reset_to_initial(*, banner_message: str | None = None) -> None:
-        _cleanup_temp_file()
+    def reset_view(banner_message: str | None = None) -> None:
+        _cleanup_temp_file(state)
         state.prepared = None
-        selection_boxes.clear()
+        state.selection_boxes.clear()
         posts_box.clear()
         errors_box.clear()
         errors_expansion.set_visibility(False)
         upload_widget.reset()
         path_input.set_value("")
-
         preview_view.set_visibility(False)
         upload_view.set_visibility(True)
+        banner_label.set_text(banner_message or "")
+        status_banner.set_visibility(bool(banner_message))
 
-        if banner_message:
-            status_banner_label.set_text(banner_message)
-            status_banner.set_visibility(True)
-        else:
-            status_banner.set_visibility(False)
-
-    def _render_preview_post(idx: int, post: Post) -> None:
-        with ui.card().classes("w-full q-pa-none overflow-hidden"):
-            with ui.row().classes("w-full items-center no-wrap px-2"):
-                cb = ui.checkbox(value=True).classes("shrink-0")
-                selection_boxes.append((idx, cb))
-
-                expansion = ui.expansion().classes("col min-w-0")
-                with expansion.add_slot("header"):
-                    with ui.row().classes(
-                        "w-full items-center justify-between gap-2 py-1 min-w-0"
-                    ):
-                        preview_label = ui.label(post_short_preview(post)).classes(
-                            "text-body2 text-weight-medium truncate col min-w-0"
-                        )
-                        preview_label.bind_visibility_from(
-                            expansion, "value", backward=lambda expanded: not expanded
-                        )
-                        if post.hashtags:
-                            ui.badge(
-                                f"{len(post.hashtags)} tag(s)", color="grey-7"
-                            ).classes("shrink-0")
-
-                with expansion, ui.column().classes("w-full q-pa-sm pt-0 gap-2"):
-                    ui.separator()
-                    tags_str = format_hashtags(post)
-                    if tags_str:
-                        ui.label(tags_str).classes("text-caption text-primary")
-                    ui.label(post.body).classes(
-                        "text-body2 whitespace-pre-line leading-relaxed"
-                    )
-
-    def _show_preview(res: CsvImporterPrepareResult) -> None:
+    def show_preview(res: CsvImporterPrepareResult) -> None:
         status_banner.set_visibility(False)
         summary_row.clear()
-        errors_box.clear()
         posts_box.clear()
-        selection_boxes.clear()
+        state.selection_boxes.clear()
 
         with summary_row:
             ui.badge(f"Valid: {len(res.posts)}", color="positive")
@@ -173,40 +183,23 @@ def build_import_tab(ctx: AppContext) -> None:
             if res.mapping_errors:
                 ui.badge(f"Map errors: {len(res.mapping_errors)}", color="negative")
 
-        total_errors = len(res.parsing_errors) + len(res.mapping_errors)
-        errors_expansion.set_visibility(total_errors > 0)
-        if total_errors > 0:
-            errors_expansion.set_text(f"Parsing & Mapping Errors ({total_errors})")
-            with errors_box:
-                for err in res.parsing_errors:
-                    ui.label(f"Row {err.row} [{err.field}]: {err.message}").classes(
-                        "text-negative text-caption"
-                    )
-                for m_err in res.mapping_errors:
-                    for f_err in m_err.errors:
-                        ui.label(
-                            f"Row {m_err.raw_post.row} [{f_err.field}]: {f_err.message}"
-                        ).classes("text-negative text-caption")
+        _render_errors(errors_box, errors_expansion, res)
 
         with posts_box:
             if not res.posts:
-                ui.label("No valid posts found in this CSV.").classes(
-                    "text-grey text-center w-full py-6"
-                )
+                styles.empty_state_label("No valid posts found in this CSV.")
             for idx, post in enumerate(res.posts):
-                _render_preview_post(idx, post)
+                _render_post_card(state.selection_boxes, idx, post)
 
         import_btn.set_enabled(bool(res.posts))
         upload_view.set_visibility(False)
         preview_view.set_visibility(True)
 
     async def on_upload(e: events.UploadEventArguments) -> None:
-        _cleanup_temp_file()
+        _cleanup_temp_file(state)
         suffix = Path(e.file.name).suffix or ".csv"
         data = await e.file.read()
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(data)
-            tmp_path = Path(tmp.name)
+        tmp_path = await asyncio.to_thread(_write_temp_file, data, suffix)
         state.temp_file = tmp_path
         path_input.set_value(str(tmp_path))
 
@@ -224,42 +217,38 @@ def build_import_tab(ctx: AppContext) -> None:
         try:
             prepared = await run_blocking(lambda: ctx.csv_importer.prepare(csv_path))
             state.prepared = prepared
-            _show_preview(prepared)
+            show_preview(prepared)
         finally:
             parse_btn.enable()
 
-    async def on_import_selected() -> None:
-        prepared = state.prepared
-        if prepared is None:
+    async def on_import() -> None:
+        if state.prepared is None:
             return
-
-        selected_posts = [
-            prepared.posts[idx] for idx, cb in selection_boxes if cb.value
+        selected = [
+            state.prepared.posts[idx] for idx, cb in state.selection_boxes if cb.value
         ]
-        if not selected_posts:
+        if not selected:
             ui.notify("Select at least one post to import.", type="warning")
             return
 
         import_btn.disable()
         cancel_btn.disable()
         try:
-            # Replace with your exact PostStoreManagementService batch/save method
-            await run_blocking(
-                lambda: (
-                    ctx.post_store_manager.save_post(post) for post in selected_posts
-                )
-            )
-            count = len(selected_posts)
-            msg = f"Successfully imported {count} post(s) into storage."
+            await run_blocking(lambda: _save_posts_sync(ctx, selected))
+            msg = f"Successfully imported {len(selected)} post(s) into storage."
             ui.notify(msg, type="positive")
-            _reset_to_initial(banner_message=msg)
+            reset_view(msg)
         finally:
             import_btn.enable()
             cancel_btn.enable()
 
     upload_widget.on_upload(on_upload)
     parse_btn.on_click(on_parse)
-    select_all_btn.on_click(lambda: [cb.set_value(True) for _, cb in selection_boxes])
-    select_none_btn.on_click(lambda: [cb.set_value(False) for _, cb in selection_boxes])
-    cancel_btn.on_click(lambda: _reset_to_initial())
-    import_btn.on_click(on_import_selected)
+    select_all_btn.on_click(
+        lambda: [cb.set_value(True) for _, cb in state.selection_boxes]
+    )
+    select_none_btn.on_click(
+        lambda: [cb.set_value(False) for _, cb in state.selection_boxes]
+    )
+    cancel_btn.on_click(lambda: reset_view())
+    import_btn.on_click(on_import)
