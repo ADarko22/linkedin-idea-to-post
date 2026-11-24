@@ -11,7 +11,7 @@ from rich.panel import Panel
 
 from linkedin_idea_to_post.app_context import AppContext, build_app_context
 from linkedin_idea_to_post.config import ConfigurationError
-from linkedin_idea_to_post.domain.drafting import DraftRequest
+from linkedin_idea_to_post.domain.drafting import DraftRequest, DraftGenerationError
 from linkedin_idea_to_post.domain.post_helpers import post_from_draft
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.ui.cli.formatting import (
@@ -93,6 +93,10 @@ def draft(idea: str, dry_run: bool, offline: bool) -> None:
                 render_post_panel(console, post, title="Generated Post")
         except ConfigurationError as exc:
             _handle_config_error(exc)
+        except DraftGenerationError as exc:
+            message = exc.message or str(exc)
+            console.print(f"[bold red]Draft generation failed:[/bold red] {message}")
+            raise Exit(code=1) from exc
 
 
 @cli.command("import-csv")
@@ -124,7 +128,7 @@ def import_csv(csv_path: Path, commit: bool, verbose: bool) -> None:
 
         if commit:
             with console.status(
-                "[bold green]Committing posts to persistence...[/bold green]"
+                    "[bold green]Committing posts to persistence...[/bold green]"
             ):
                 commit_result = app.csv_importer.commit(result)
 

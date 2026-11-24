@@ -14,7 +14,7 @@ from linkedin_idea_to_post.domain.drafting import (
     KnowledgeSelection,
     KnowledgeStance,
     VoiceSelection,
-    VoiceTuning,
+    VoiceTuning, DraftGenerationError,
 )
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import post_from_draft
@@ -554,6 +554,13 @@ def build_draft_tab(ctx: AppContext) -> None:
             render_history()
             sync_status()
             ui.notify("Draft generated.", type="positive")
+        except DraftGenerationError as exc:
+            message = exc.message or str(exc) or "Draft generation failed. Please try again."
+            sync_status()
+            ui.notify(message, type="negative")
+        except Exception as exc:
+            sync_status()
+            ui.notify(f"Unexpected error: {exc}", type="negative")
         finally:
             gen_btn.enable()
             build_btn.enable()
