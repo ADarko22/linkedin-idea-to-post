@@ -28,7 +28,7 @@ class CrewaiDraftWriter(DraftWriter):
         }
 
         try:
-            crew_output = WriterCrew(self.llm).crew().kickoff(inputs=inputs)  # type: ignore[misc]
+            crew_output = WriterCrew(self.llm).crew().kickoff(inputs=inputs)
         except Exception as exc:
             raise DraftGenerationError(f"Draft generation failed: {exc}") from exc
 

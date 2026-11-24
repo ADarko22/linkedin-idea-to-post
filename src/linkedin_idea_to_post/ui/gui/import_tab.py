@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-import tempfile
 
 from nicegui import events, ui
 
@@ -143,7 +143,9 @@ def build_import_tab(ctx: AppContext) -> None:
                 with styles.row_gap_2():
                     select_all_btn = styles.flat_button("All")
                     select_none_btn = styles.flat_button("None")
-                    cancel_btn = styles.outline_button("Cancel", icon="close", dense=False)
+                    cancel_btn = styles.outline_button(
+                        "Cancel", icon="close", dense=False
+                    )
                     import_btn = styles.positive_button("Import Selected", icon="check")
 
             errors_expansion = ui.expansion(

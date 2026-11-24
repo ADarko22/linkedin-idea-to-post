@@ -48,9 +48,12 @@ def modal_card(
     blur: str = "blur(2px)",
 ) -> Generator[ui.card, None, None]:
     dialog = ui.dialog().props(f"backdrop-filter='{blur}'")
-    with dialog, ui.card().classes(
-        f"w-full {width_classes} q-pa-md gap-3 overflow-x-hidden"
-    ) as card:
+    with (
+        dialog,
+        ui.card().classes(
+            f"w-full {width_classes} q-pa-md gap-3 overflow-x-hidden"
+        ) as card,
+    ):
         yield card
 
 

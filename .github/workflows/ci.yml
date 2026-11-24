@@ -22,18 +22,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies (including dev group)
-        run: uv sync --locked --group dev --no-build
+        run: uv sync --no-build --locked --group dev
 
       - name: Lint and format check with Ruff
         run: |
-          uv run ruff check . --no-build --locked 
-          uv run ruff format --check . --no-build --locked 
+          uv run --no-build --locked  ruff check .
+          uv run --no-build --locked  ruff format --check .
 
       - name: Type check with mypy
-        run: uv run mypy src --no-build --locked
+        run: uv run --no-build --locked mypy src
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=linkedin_idea_to_post --cov-report=xml:coverage.xml --no-build --locked
+        run: uv run --no-build --locked pytest --cov=linkedin_idea_to_post --cov-report=xml:coverage.xml
 
       - name: Cache SonarQube packages
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0

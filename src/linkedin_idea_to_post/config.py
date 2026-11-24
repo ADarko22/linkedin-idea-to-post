@@ -27,9 +27,10 @@ def ensure_app_dirs(config: AppConfig) -> None:
 def resolve_config_path() -> Path:
     if env_path := os.getenv("LI2P_CONFIG"):
         return Path(env_path).expanduser()
-    if Path("config.toml").exists():
-        return Path("config.toml").resolve()
-    return APP_DIR / "config.toml"
+    config_toml = "config.toml"
+    if Path(config_toml).exists():
+        return Path(config_toml).resolve()
+    return APP_DIR / config_toml
 
 
 class PersistenceSettings(BaseModel):

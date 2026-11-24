@@ -100,11 +100,15 @@ def build_draft_tab(ctx: AppContext) -> None:
         with search_input.add_slot("prepend"):
             ui.icon("search", color="primary")
 
-        search_panel = ui.column().classes("w-full border rounded bg-grey-1 q-pa-xs gap-1")
+        search_panel = ui.column().classes(
+            "w-full border rounded bg-grey-1 q-pa-xs gap-1"
+        )
         search_panel.set_visibility(False)
         with search_panel:
             search_info = styles.muted_caption("", "text-grey-8 px-1")
-            search_box = ui.column().classes("w-full max-h-60 overflow-y-auto gap-1.5 pr-1")
+            search_box = ui.column().classes(
+                "w-full max-h-60 overflow-y-auto gap-1.5 pr-1"
+            )
 
         with (
             styles.scroll_box("h-[72vh]", "min-h-80 overflow-x-hidden"),
@@ -116,7 +120,10 @@ def build_draft_tab(ctx: AppContext) -> None:
             styles.section_title("Knowledge", small=True)
             knowledge_box = ui.column().classes("w-full gap-2")
 
-    with styles.narrow_column("overflow-x-hidden"), styles.card_panel("overflow-x-hidden"):
+    with (
+        styles.narrow_column("overflow-x-hidden"),
+        styles.card_panel("overflow-x-hidden"),
+    ):
         with styles.row_between("gap-2 flex-wrap"):
             styles.section_title("Idea & Draft")
             with styles.row_gap_2():
@@ -143,7 +150,9 @@ def build_draft_tab(ctx: AppContext) -> None:
             )
             with styles.row_gap_2("flex-wrap"):
                 build_btn = styles.primary_button("Build Context", icon="auto_awesome")
-                gen_btn = ui.button("Generate Draft", icon="edit_note", color="secondary")
+                gen_btn = ui.button(
+                    "Generate Draft", icon="edit_note", color="secondary"
+                )
 
         history_row = styles.row_gap_2("w-full flex-wrap")
         history_row.set_visibility(False)
@@ -160,7 +169,9 @@ def build_draft_tab(ctx: AppContext) -> None:
                 save_draft_btn = styles.outline_button(
                     "Save as DRAFT", icon="save", dense=False
                 )
-                save_pub_btn = styles.positive_button("Save as PUBLISHED", icon="publish")
+                save_pub_btn = styles.positive_button(
+                    "Save as PUBLISHED", icon="publish"
+                )
                 save_draft_btn.set_enabled(False)
                 save_pub_btn.set_enabled(False)
 
@@ -221,9 +232,9 @@ def build_draft_tab(ctx: AppContext) -> None:
                     render_history()
                     sync_status()
 
-                ui.button(lbl, on_click=pick, color="primary" if active else None).props(
-                    "dense unelevated" if active else "dense outline"
-                )
+                ui.button(
+                    lbl, on_click=pick, color="primary" if active else None
+                ).props("dense unelevated" if active else "dense outline")
 
     def _add_and_close(post: Post, role: Role) -> None:
         add_manual(post, role)
@@ -293,7 +304,9 @@ def build_draft_tab(ctx: AppContext) -> None:
                         prev = styles.post_preview_label(
                             post_short_preview(item.post), "whitespace-normal col"
                         )
-                        prev.bind_visibility_from(exp, "value", backward=lambda v: not v)
+                        prev.bind_visibility_from(
+                            exp, "value", backward=lambda v: not v
+                        )
                         ui.badge(
                             "Added" if manual else "Suggested",
                             color="teal" if manual else "grey-7",

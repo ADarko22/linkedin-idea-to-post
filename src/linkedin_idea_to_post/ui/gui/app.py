@@ -11,7 +11,9 @@ from linkedin_idea_to_post.ui.gui.draft_tab import build_draft_tab
 from linkedin_idea_to_post.ui.gui.import_tab import build_import_tab
 from linkedin_idea_to_post.ui.gui.posts_tab import build_posts_tab
 
-_PANEL_FLEX = "w-full h-full q-px-md q-pt-xs q-pb-sm flex flex-col min-h-0 overflow-hidden"
+_PANEL_FLEX = (
+    "w-full h-full q-px-md q-pt-xs q-pb-sm flex flex-col min-h-0 overflow-hidden"
+)
 _PANEL_SCROLL = "w-full h-full q-px-md q-pt-xs q-pb-sm overflow-y-auto"
 
 
@@ -34,8 +36,7 @@ def _build_ui(ctx: AppContext) -> None:
                 .classes("h-12")
                 .props(
                     "dense align=right no-caps active-color=primary indicator-color=primary"
-                )
-                as tabs
+                ) as tabs
             ):
                 posts_tab = ui.tab("Posts", icon="article")
                 draft_tab = ui.tab("New Draft", icon="auto_awesome")

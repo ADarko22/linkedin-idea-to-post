@@ -73,6 +73,7 @@ class Draft(BaseModel):
     idea: str
     generated_content: str
 
+
 class DraftGenerationError(RuntimeError):
     """Raised when drafting fails due to LLM API, network, or output errors."""
 
@@ -80,6 +81,7 @@ class DraftGenerationError(RuntimeError):
         super().__init__(message)
         self.message = message
         self.retryable = retryable
+
 
 class DraftWriter(Protocol):
     def write(self, request: DraftRequest) -> Draft: ...

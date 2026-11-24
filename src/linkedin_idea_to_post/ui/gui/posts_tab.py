@@ -47,8 +47,7 @@ def _filter_posts(posts: list[Post], search_term: str) -> list[Post]:
     return [
         p
         for p in posts
-        if needle in p.body.lower()
-        or any(needle in tag.lower() for tag in p.hashtags)
+        if needle in p.body.lower() or any(needle in tag.lower() for tag in p.hashtags)
     ]
 
 
@@ -85,14 +84,15 @@ def build_posts_tab(ctx: AppContext) -> None:
     }
     active_post_ref: dict[str, Post | None] = {"post": None}
 
-    with styles.modal_card():
+    post_dialog = ui.dialog().props("backdrop-filter='blur(2px)'")
+    with post_dialog, styles.dialog_card():
         with styles.row_between("gap-2 flex-wrap"):
             with styles.row_gap_2():
                 dialog_meta = styles.mono_caption("")
                 dialog_badge = ui.badge("")
             styles.flat_button(
                 icon="close",
-                on_click=lambda: post_dialog.close(),
+                on_click=post_dialog.close,
                 extra_props="round dense color=grey-8",
             )
 
@@ -104,14 +104,14 @@ def build_posts_tab(ctx: AppContext) -> None:
         edit_container = ui.column().classes("w-full gap-2")
         edit_container.set_visibility(False)
         with edit_container:
-            body_editor = styles.outlined_textarea(label="Edit post body", autogrow=True)
+            body_editor = styles.outlined_textarea(
+                label="Edit post body", autogrow=True
+            )
             with styles.row_gap_2("justify-end w-full"):
                 cancel_edit_btn = styles.flat_button("Cancel")
                 save_edit_btn = styles.primary_button("Save Changes", icon="save")
 
         dialog_footer = ui.row().classes("w-full justify-end gap-2")
-
-    post_dialog = dialog_tags.parent_slot.parent.parent_slot.parent
 
     def _set_edit_mode(editing: bool, post: Post | None = None) -> None:
         edit_container.set_visibility(editing)
@@ -185,7 +185,7 @@ def build_posts_tab(ctx: AppContext) -> None:
             )
             await run_blocking(lambda: ctx.post_store_manager.save_post(updated_post))
             ui.notify("Post updated.", type="positive")
-            await post_dialog.close()
+            post_dialog.close()
             await load_page()
         finally:
             save_edit_btn.enable()
@@ -194,46 +194,46 @@ def build_posts_tab(ctx: AppContext) -> None:
     cancel_edit_btn.on_click(lambda: _set_edit_mode(False))
     save_edit_btn.on_click(_on_save_edit)
 
-    with styles.narrow_column(), styles.card_panel("gap-2"):
-        with styles.row_gap_2("w-full gap-3"):
-            search_input = styles.outlined_input(
-                "Search posts", placeholder="Search by keywords or phrases..."
-            ).classes("col")
-            search_btn = styles.primary_button("Search", icon="search")
+    with styles.narrow_column("h-full flex flex-col min-h-0 gap-2"):
+        with styles.card_panel("gap-2 shrink-0 q-pa-sm"):
+            with styles.row_gap_2("w-full gap-3"):
+                search_input = styles.outlined_input(
+                    "Search posts", placeholder="Search by keywords or phrases..."
+                ).classes("col")
+                search_btn = styles.primary_button("Search", icon="search")
 
-        with styles.row_gap_2("w-full gap-3 flex-wrap"):
-            origin_select = (
-                ui.select(
-                    options=[o.value for o in PostOrigin],
-                    multiple=True,
-                    label="Origins",
+            with styles.row_gap_2("w-full gap-3 flex-wrap"):
+                origin_select = (
+                    ui.select(
+                        options=[o.value for o in PostOrigin],
+                        multiple=True,
+                        label="Origins",
+                    )
+                    .props("dense outlined use-chips")
+                    .classes("min-w-48 col")
                 )
-                .props("dense outlined use-chips")
-                .classes("min-w-48 col")
-            )
-            status_select = (
-                ui.select(
-                    options=[s.value for s in PostStatus],
-                    multiple=True,
-                    label="Statuses",
+                status_select = (
+                    ui.select(
+                        options=[s.value for s in PostStatus],
+                        multiple=True,
+                        label="Statuses",
+                    )
+                    .props("dense outlined use-chips")
+                    .classes("min-w-48 col")
                 )
-                .props("dense outlined use-chips")
-                .classes("min-w-48 col")
-            )
-            page_size_input = (
-                ui.number(
-                    "Per page",
-                    value=state["limit"],
-                    min=1,
-                    max=200,
-                    step=1,
+                page_size_input = (
+                    ui.number(
+                        "Per page",
+                        value=state["limit"],
+                        min=1,
+                        max=200,
+                        step=1,
+                    )
+                    .props("dense outlined")
+                    .classes("w-28")
                 )
-                .props("dense outlined")
-                .classes("w-28")
-            )
 
-    with styles.narrow_column():
-        with styles.row_between("px-1"):
+        with styles.row_between("px-1 shrink-0"):
             page_label = styles.section_title(
                 f"Page {state['page']}", small=True
             ).classes("text-grey-8")
@@ -241,7 +241,7 @@ def build_posts_tab(ctx: AppContext) -> None:
                 prev_btn = styles.flat_button("Previous", icon="chevron_left")
                 next_btn = styles.flat_button("Next", icon="chevron_right")
 
-        with styles.scroll_box("h-[calc(100vh-310px)]"):
+        with styles.scroll_box("flex-1", "min-h-0"):
             list_container = ui.column().classes("w-full gap-2")
 
     async def on_filter_or_search() -> None:
