@@ -26,15 +26,22 @@ generates LinkedIn posts tailored to your style and stance.
 
 Install as a tool from GitHub:
 
-```bash
-uv tool install git+[https://github.com/ADarko22/linkedin-idea-to-post.git](https://github.com/ADarko22/linkedin-idea-to-post.git)
-```
+- With `uv`:
+   ```bash
+   uv tool install git+https://github.com/ADarko22/linkedin-idea-to-post.git
+   ```
 
-Or run locally from a clone:
-
-```bash
-uv sync
-```
+- With `pip` (inside a virtual environment):
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install git+https://github.com/ADarko22/linkedin-idea-to-post.git
+   ```
+  
+- Or run locally from a clone:
+    ```bash
+   uv sync
+   ```
 
 ### Configuration
 

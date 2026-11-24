@@ -3,10 +3,10 @@ name = "linkedin-idea-to-post"
 version = "0.1.0"
 description = "A multi-agent workflow that takes a raw user idea and transforms it into a high-impact LinkedIn post."
 readme = "README.md"
+requires-python = ">=3.12,<3.14"
 authors = [
     { name = "ADarko22", email = "anelo.buono992@gmail.com" }
 ]
-requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.5.1",
     "crewai[google-genai]~=1.15.0",
@@ -28,8 +28,6 @@ Issues = "https://github.com/ADarko22/linkedin-idea-to-post/issues"
 li2p = "linkedin_idea_to_post.ui.cli.app:cli"
 li2p-gui = "linkedin_idea_to_post.ui.gui.app:main"
 
-[tool.setuptools.package-data]
-linkedin_idea_to_post = ["config.toml"]
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
