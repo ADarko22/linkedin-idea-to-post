@@ -35,10 +35,25 @@ jobs:
       - name: Run tests with coverage
         run: uv run pytest --cov=linkedin_idea_to_post --cov-report=xml:coverage.xml
 
-      - name: SonarQube Cloud Scan
-        uses: SonarSource/sonarqube-scan-action@70bad232163b09d998ea0707ee80c0ec80798c16 #v8.5.1
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=adarko22-dev
+            -Dsonar.projectKey=ADarko22_linkedin-idea-to-post
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.12
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   packaging-smoke-test:
     runs-on: ubuntu-latest
