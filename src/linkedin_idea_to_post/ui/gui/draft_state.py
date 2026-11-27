@@ -16,6 +16,10 @@ from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import post_from_draft
 
 DEFAULT_MAX_HISTORY = 10
+DEFAULT_TARGET_WORDS = 220
+MIN_TARGET_WORDS = 50
+MAX_TARGET_WORDS = 1500
+WORD_COUNT_STEP = 25
 MAX_SEARCH = 15
 Role = Literal["voice", "knowledge"]
 Source = Literal["auto", "manual"]

@@ -9,7 +9,13 @@ from linkedin_idea_to_post.app_context import AppContext
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.ui.gui import components, templates, theme
 from linkedin_idea_to_post.ui.gui.helpers import format_hashtags, run_blocking
-from linkedin_idea_to_post.ui.gui.posts_state import PostsState
+from linkedin_idea_to_post.ui.gui.posts_state import (
+    MAX_PAGE_SIZE,
+    MIN_PAGE_SIZE,
+    PostsState,
+)
+
+_INITIAL_LOAD_DELAY_SEC = 0.05
 
 
 def _render_posts(
@@ -163,8 +169,8 @@ def build_posts_tab(ctx: AppContext) -> None:
                     ui.number(
                         "Per page",
                         value=state.limit,
-                        min=1,
-                        max=200,
+                        min=MIN_PAGE_SIZE,
+                        max=MAX_PAGE_SIZE,
                         step=1,
                     )
                     .props(theme.PROPS_OUTLINED_DENSE)
@@ -183,4 +189,4 @@ def build_posts_tab(ctx: AppContext) -> None:
     origin_select.on_value_change(lambda _: on_filter_or_search())
     status_select.on_value_change(lambda _: on_filter_or_search())
 
-    ui.timer(0.05, load_page, once=True)
+    ui.timer(_INITIAL_LOAD_DELAY_SEC, load_page, once=True)

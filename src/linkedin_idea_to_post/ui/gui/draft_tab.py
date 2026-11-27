@@ -14,7 +14,11 @@ from linkedin_idea_to_post.domain.post import Post, PostStatus
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 from linkedin_idea_to_post.ui.gui import components, templates, theme
 from linkedin_idea_to_post.ui.gui.draft_state import (
+    DEFAULT_TARGET_WORDS,
     MAX_SEARCH,
+    MAX_TARGET_WORDS,
+    MIN_TARGET_WORDS,
+    WORD_COUNT_STEP,
     ContextItem,
     DraftTabState,
     Role,
@@ -110,7 +114,13 @@ def build_draft_tab(ctx: AppContext) -> None:
 
         with theme.row_between("flex-wrap"):
             words_input = (
-                ui.number("Target words", value=220, min=50, max=1500, step=25)
+                ui.number(
+                    "Target words",
+                    value=DEFAULT_TARGET_WORDS,
+                    min=MIN_TARGET_WORDS,
+                    max=MAX_TARGET_WORDS,
+                    step=WORD_COUNT_STEP,
+                )
                 .props(theme.PROPS_OUTLINED_DENSE)
                 .classes("w-36")
             )
@@ -368,7 +378,8 @@ def build_draft_tab(ctx: AppContext) -> None:
         async def _build() -> None:
             draft_ctx = await run_blocking(
                 lambda: ctx.draft_context_service.create_context(
-                    idea=idea, target_word_count=int(words_input.value or 220)
+                    idea=idea,
+                    target_word_count=int(words_input.value or DEFAULT_TARGET_WORDS),
                 )
             )
             state.merge_auto(draft_ctx)
@@ -388,7 +399,9 @@ def build_draft_tab(ctx: AppContext) -> None:
 
         async def _generate() -> None:
             try:
-                draft_ctx = state.build_draft_context(int(words_input.value or 220))
+                draft_ctx = state.build_draft_context(
+                    int(words_input.value or DEFAULT_TARGET_WORDS)
+                )
                 draft: Draft = await run_blocking(
                     lambda: ctx.draft_service.compose(
                         DraftRequest(idea=idea, context=draft_ctx)

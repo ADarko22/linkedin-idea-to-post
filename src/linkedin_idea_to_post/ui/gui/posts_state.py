@@ -7,10 +7,14 @@ from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
 from linkedin_idea_to_post.domain.post_helpers import extract_hashtags
 from linkedin_idea_to_post.domain.storage import PostGetQuery
 
+DEFAULT_PAGE_SIZE = 20
+MIN_PAGE_SIZE = 1
+MAX_PAGE_SIZE = 200
+
 
 @dataclass
 class PostsState:
-    limit: int = 20
+    limit: int = DEFAULT_PAGE_SIZE
     page: int = 1
     search_term: str = ""
     origins: list[str] = field(default_factory=list)
@@ -18,7 +22,7 @@ class PostsState:
     active_post: Post | None = None
 
     def set_limit(self, raw_limit: int | float | None) -> int:
-        self.limit = max(1, int(raw_limit or 20))
+        self.limit = max(MIN_PAGE_SIZE, int(raw_limit or DEFAULT_PAGE_SIZE))
         return self.limit
 
     def reset_page(self) -> None:
