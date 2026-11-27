@@ -215,7 +215,6 @@ body {
   font-size: 12px;
   line-height: 1.5;
 }
-.li2p-fill-textarea,
 .li2p-fill-textarea .q-field__inner,
 .li2p-fill-textarea .q-field__control,
 .li2p-fill-textarea .q-field__control-container,
@@ -224,6 +223,7 @@ body {
 }
 .li2p-fill-textarea textarea {
   overflow-y: auto !important;
+  resize: none !important;
   font-size: 13.5px;
   line-height: 1.6;
 }

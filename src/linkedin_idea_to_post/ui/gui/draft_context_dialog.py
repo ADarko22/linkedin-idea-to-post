@@ -8,11 +8,11 @@ from linkedin_idea_to_post.app_context import AppContext
 from linkedin_idea_to_post.domain.drafting import KnowledgeStance, VoiceTuning
 from linkedin_idea_to_post.domain.post import Post
 from linkedin_idea_to_post.domain.storage import PostGetQuery
-from linkedin_idea_to_post.ui.gui import components, templates, theme
-from linkedin_idea_to_post.ui.gui.draft_state import (
+from linkedin_idea_to_post.ui.gui import components, layout, primitives
+from linkedin_idea_to_post.ui.gui.draft_context_state import (
     MAX_SEARCH,
     ContextItem,
-    DraftTabState,
+    DraftContextState,
     Role,
     filter_search_matches,
 )
@@ -25,7 +25,7 @@ class DraftContextDialog:
     def __init__(
         self,
         ctx: AppContext,
-        state: DraftTabState,
+        state: DraftContextState,
         *,
         on_change: Callable[[], None],
     ) -> None:
@@ -34,51 +34,45 @@ class DraftContextDialog:
         self._on_change = on_change
         self._reader = components.PostReaderModal(
             title="Post Content",
-            width_classes="max-w-2xl",
+            size="md",
             blur="blur(3px)",
-            body_height="h-72",
+            body_height="sm",
         )
 
-        with templates.modal_dialog("max-w-5xl") as (dialog, _):
+        with layout.modal_dialog(size="xl") as (dialog, _):
             self._dialog = dialog
-            with theme.row_between("gap-2 flex-wrap"):
-                with theme.row_gap_2():
-                    ui.icon("tune", size="md", color="primary")
-                    theme.section_title("Context & Tuning")
-                with theme.row_gap_2():
-                    self._v_badge = theme.badge(
+            with primitives.row(justify="between", wrap=True):
+                with primitives.row(full_width=False, gap="xs"):
+                    ui.icon("tune", size="xs", color="primary")
+                    primitives.heading("Context & Tuning", level=1)
+                with primitives.row(full_width=False, gap="xs"):
+                    self._v_badge = primitives.badge(
                         f"Voice 0/{state.voice_limit}", color="blue-grey"
                     )
-                    self._k_badge = theme.badge(
+                    self._k_badge = primitives.badge(
                         f"Knowledge 0/{state.knowledge_limit}", color="blue-grey"
                     )
-                    theme.positive_button(
+                    primitives.button(
                         "Apply & Close",
                         icon="check_circle",
+                        variant="positive",
                         on_click=dialog.close,
-                        unelevated=True,
                     )
 
-            self._search_input = theme.outlined_input(
+            self._search_input = primitives.text_input(
                 f"Search archive (up to {MAX_SEARCH})",
                 placeholder="Keywords or #hashtags...",
             )
-            with self._search_input.add_slot("prepend"):
-                ui.icon("search", color="primary")
-
             self._search_panel, self._search_info, self._search_box = (
-                templates.search_results_panel()
+                layout.search_results_panel()
             )
 
-            with (
-                theme.scroll_box("h-[72vh]", "min-h-80 overflow-x-hidden"),
-                theme.stack("gap-3", "overflow-x-hidden"),
-            ):
-                theme.section_title("Voices", small=True)
-                self._voices_box = theme.stack()
+            with primitives.scroll_box(height="xl"), primitives.column(gap="md"):
+                primitives.heading("Voices", level=2)
+                self._voices_box = primitives.column()
                 ui.separator()
-                theme.section_title("Knowledge", small=True)
-                self._knowledge_box = theme.stack()
+                primitives.heading("Knowledge", level=2)
+                self._knowledge_box = primitives.column()
 
         self._search_input.on_value_change(self._on_search)
         self._search_input.on("focus", self._on_search)
@@ -97,10 +91,10 @@ class DraftContextDialog:
         ks = self._state.selected_count("knowledge")
         self._v_badge.set_text(f"Voice {vs}/{self._state.voice_limit}")
         self._k_badge.set_text(f"Knowledge {ks}/{self._state.knowledge_limit}")
-        theme.set_badge_color(
+        primitives.set_badge_color(
             self._v_badge, "warning" if vs >= self._state.voice_limit else "blue-grey"
         )
-        theme.set_badge_color(
+        primitives.set_badge_color(
             self._k_badge,
             "warning" if ks >= self._state.knowledge_limit else "blue-grey",
         )
@@ -129,7 +123,7 @@ class DraftContextDialog:
         box.clear()
         with box:
             if not items:
-                theme.muted_caption(f"No {role} posts.", "text-grey")
+                primitives.text(f"No {role} posts.", tone="muted")
                 return
             for item in items:
                 manual = item.source == "manual"
@@ -152,11 +146,11 @@ class DraftContextDialog:
                         if item_role == "voice"
                         else target.stance.value
                     )
-                    sel = theme.outlined_select(
+                    sel = primitives.select_input(
                         opts,
                         value=val,
                         label="Tuning" if item_role == "voice" else "Stance",
-                        extra_classes="w-44 shrink-0",
+                        width="md",
                     )
 
                     def _on_enum_change(
@@ -169,11 +163,11 @@ class DraftContextDialog:
                             t.stance = KnowledgeStance(raw)
 
                     sel.on_value_change(_on_enum_change)
-                    theme.icon_button(
+                    primitives.icon_button(
                         "delete",
                         color="negative",
                         tooltip="Remove",
-                        extra_classes="shrink-0 mt-1",
+                        shrink=True,
                         on_click=lambda _, t=target: self._on_remove_item(t),
                     )
 
@@ -182,7 +176,6 @@ class DraftContextDialog:
                     selected=item.selected,
                     on_toggle=_toggle,
                     badge_text="Added" if manual else "Suggested",
-                    badge_color="teal" if manual else "grey-7",
                     accent="manual" if manual else "suggested",
                     trailing_controls=_trailing,
                 )
@@ -202,18 +195,17 @@ class DraftContextDialog:
 
     def _open_reader(self, post: Post) -> None:
         def _render_footer(target: Post) -> None:
-            theme.action_button(
+            primitives.button(
                 "+ Voice",
                 icon="record_voice_over",
-                color="primary",
-                unelevated=True,
+                variant="primary",
                 on_click=lambda _, p=target: self._add_and_close_reader(p, "voice"),
             )
-            theme.action_button(
+            primitives.button(
                 "+ Knowledge",
                 icon="menu_book",
+                variant="primary",
                 color="teal",
-                unelevated=True,
                 on_click=lambda _, p=target: self._add_and_close_reader(p, "knowledge"),
             )
 
