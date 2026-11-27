@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from nicegui import ui
 
@@ -13,83 +12,57 @@ from linkedin_idea_to_post.ui.gui.config_state import (
     parse_and_validate_toml,
 )
 
-_TOML_EDITOR_CLASSES = (
-    "w-full flex-1 h-[calc(100vh-285px)] min-h-72 font-mono text-caption "
-    "[&_.q-field\\_\\_inner]:h-full [&_.q-field\\_\\_control]:h-full "
-    "[&_.q-field\\_\\_control-container]:h-full [&_textarea]:h-full [&_textarea]:overflow-y-auto"
-)
-
-
-def _render_section_entries(
-    section_name: str, section_val: Any, *, reveal_secrets: bool
-) -> None:
-    if not isinstance(section_val, dict):
-        ui.label(
-            format_config_value(
-                section_name, section_val, reveal_secrets=reveal_secrets
-            )
-        ).classes("text-caption break-all")
-        return
-
-    for key, val in section_val.items():
-        with ui.row().classes(
-            "w-full items-baseline justify-between gap-2 py-0.5 border-b border-grey-3"
-        ):
-            ui.label(str(key)).classes("text-caption text-grey-8 font-mono shrink-0")
-            ui.label(
-                format_config_value(str(key), val, reveal_secrets=reveal_secrets)
-            ).classes("text-caption text-weight-medium text-right break-all")
-
 
 def _render_sections(sections_box: ui.column, state: ConfigState) -> None:
     sections_box.clear()
     with sections_box:
         for section_name, section_val in state.config_sections().items():
-            with ui.card().classes("w-full shrink-0 q-pa-sm bg-grey-1 border"):
-                ui.label(str(section_name)).classes(
-                    "text-caption text-weight-bold text-uppercase text-primary q-mb-xs"
+            name = str(section_name)
+            if isinstance(section_val, dict):
+                entries: list[tuple[str, str]] | str = [
+                    (
+                        str(k),
+                        format_config_value(
+                            str(k), v, reveal_secrets=state.reveal_secrets
+                        ),
+                    )
+                    for k, v in section_val.items()
+                ]
+            else:
+                entries = format_config_value(
+                    name, section_val, reveal_secrets=state.reveal_secrets
                 )
-                _render_section_entries(
-                    str(section_name),
-                    section_val,
-                    reveal_secrets=state.reveal_secrets,
-                )
+            templates.key_value_card(name, entries)
 
 
 def build_config_tab(ctx: AppContext, toml_path: Path | None = None) -> None:
     state = ConfigState.create(ctx, toml_path)
 
     with templates.wide_page():
-        with templates.card_panel("shrink-0"):
-            with theme.row_between("gap-2 flex-wrap"):
-                with ui.column().classes("gap-0.5"):
-                    theme.section_title("Configuration")
-                    theme.mono_caption(
-                        f"Target file: {state.resolved_path}", "break-all"
-                    )
-                with theme.row_gap_2("flex-wrap"):
-                    reveal_btn = theme.flat_button("Show Secrets", icon="visibility")
-                    validate_btn = theme.outline_button("Validate", icon="fact_check")
-                    save_btn = theme.primary_button(
-                        "Save & Apply", icon="check_circle", unelevated=True
-                    )
+        with (
+            templates.card_panel("shrink-0"),
+            theme.row_between("gap-2 flex-wrap"),
+        ):
+            with theme.stack("gap-0.5", "col"):
+                theme.section_title("Configuration")
+                theme.mono_caption(f"Target file: {state.resolved_path}", "break-all")
+            with theme.row_gap_2("flex-wrap"):
+                reveal_btn = theme.flat_button("Show Secrets", icon="visibility")
+                validate_btn = theme.outline_button("Validate", icon="fact_check")
+                save_btn = theme.primary_button(
+                    "Save & Apply", icon="check_circle", unelevated=True
+                )
 
         with templates.split_pane(columns=2):
             with templates.titled_card_panel("Active Settings"):
-                sections_box = ui.column().classes(
-                    "w-full flex-1 min-h-0 overflow-y-auto overflow-x-hidden gap-2 pr-1"
-                )
-
+                sections_box = theme.scroll_column()
             with templates.titled_card_panel("TOML Editor"):
-                toml_editor = theme.outlined_textarea(
-                    value=state.read_initial_toml(),
-                    extra_classes=_TOML_EDITOR_CLASSES,
-                )
+                toml_editor = theme.toml_editor(state.read_initial_toml())
 
     def on_toggle_secrets() -> None:
         revealed = state.toggle_secrets()
         reveal_btn.set_text("Hide Secrets" if revealed else "Show Secrets")
-        reveal_btn.props(f"icon={'visibility_off' if revealed else 'visibility'}")
+        theme.set_icon(reveal_btn, "visibility_off" if revealed else "visibility")
         _render_sections(sections_box, state)
 
     def on_validate() -> None:

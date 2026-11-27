@@ -276,3 +276,24 @@ def badge(
     if clickable:
         b.classes("cursor-pointer")
     return b
+
+
+def set_icon(btn: ui.button, icon: str) -> None:
+    btn.props(f"icon={icon}")
+
+
+_TOML_EDITOR_CLASSES = (
+    "w-full flex-1 h-[calc(100vh-285px)] min-h-72 font-mono text-caption "
+    "[&_.q-field\\_\\_inner]:h-full [&_.q-field\\_\\_control]:h-full "
+    "[&_.q-field\\_\\_control-container]:h-full [&_textarea]:h-full [&_textarea]:overflow-y-auto"
+)
+
+
+def toml_editor(value: str = "") -> ui.textarea:
+    return outlined_textarea(value=value, extra_classes=_TOML_EDITOR_CLASSES)
+
+
+def csv_upload(label: str = "Choose Shares.csv") -> ui.upload:
+    return ui.upload(auto_upload=True, max_files=1).props(
+        f"accept=.csv flat bordered label='{label}'"
+    )

@@ -31,14 +31,12 @@ def _render_errors(
     errors_expansion.set_text(f"Parsing & Mapping Errors ({total})")
     with errors_box:
         for err in res.parsing_errors:
-            ui.label(f"Row {err.row} [{err.field}]: {err.message}").classes(
-                theme.ERROR_CAPTION
-            )
+            theme.error_label(f"Row {err.row} [{err.field}]: {err.message}")
         for m_err in res.mapping_errors:
             for f_err in m_err.errors:
-                ui.label(
+                theme.error_label(
                     f"Row {m_err.raw_post.row} [{f_err.field}]: {f_err.message}"
-                ).classes(theme.ERROR_CAPTION)
+                )
 
 
 def build_import_tab(ctx: AppContext) -> None:
@@ -58,15 +56,13 @@ def build_import_tab(ctx: AppContext) -> None:
                 "Path to Shares.csv", placeholder="/path/to/Shares.csv"
             )
             with theme.row_between("q-mt-xs"):
-                upload_widget = ui.upload(auto_upload=True, max_files=1).props(
-                    "accept=.csv flat bordered label='Choose Shares.csv'"
-                )
+                upload_widget = theme.csv_upload()
                 parse_btn = theme.primary_button("Parse & Preview", icon="preview")
 
         preview_view = templates.narrow_page()
         preview_view.set_visibility(False)
         with preview_view:
-            with ui.card().classes("w-full q-pa-sm"), theme.row_between():
+            with templates.compact_card(), theme.row_between():
                 summary_row = theme.row_gap_2()
                 with theme.row_gap_2():
                     select_all_btn = theme.flat_button("All")
@@ -76,15 +72,11 @@ def build_import_tab(ctx: AppContext) -> None:
                     )
                     import_btn = theme.positive_button("Import Selected", icon="check")
 
-            errors_expansion = ui.expansion(
-                "Parsing & Mapping Errors", icon="warning"
-            ).classes("w-full bg-orange-1 rounded border border-orange-4")
-            errors_expansion.set_visibility(False)
-            with errors_expansion:
-                errors_box = ui.column().classes("w-full gap-1 q-pa-sm")
-
+            errors_expansion, errors_box = templates.warning_expansion(
+                "Parsing & Mapping Errors"
+            )
             with theme.scroll_box():
-                posts_box = ui.column().classes("w-full gap-2")
+                posts_box = theme.stack()
 
     def reset_view(banner_message: str | None = None) -> None:
         state.reset()
