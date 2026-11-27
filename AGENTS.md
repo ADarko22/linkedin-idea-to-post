@@ -19,3 +19,4 @@
 - Before modifying more than 2 files, propose a brief plan and list affected modules.
 - Every bug fix or new behavior must include or update corresponding unit tests under `tests/`.
 - Run `pytest` and linter checks before concluding any implementation task.
+- Update or generate documentation relevant to the architecture, operation, configuration and usage of the application.
