@@ -51,6 +51,7 @@ class EmbeddingSettings(BaseModel):
 class DraftingSettings(BaseModel):
     voice_examples_count: int = Field(default=3)
     knowledge_examples_count: int = Field(default=5)
+    draft_history_limit: int = Field(default=10, ge=1)
 
 
 class LlmSettings(BaseModel):
