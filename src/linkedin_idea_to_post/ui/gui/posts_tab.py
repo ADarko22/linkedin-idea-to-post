@@ -7,7 +7,7 @@ from nicegui import ui
 
 from linkedin_idea_to_post.app_context import AppContext
 from linkedin_idea_to_post.domain.post import Post, PostOrigin, PostStatus
-from linkedin_idea_to_post.ui.gui import components, templates, theme
+from linkedin_idea_to_post.ui.gui import components, layout, primitives
 from linkedin_idea_to_post.ui.gui.helpers import run_blocking
 from linkedin_idea_to_post.ui.gui.posts_state import (
     MAX_PAGE_SIZE,
@@ -26,7 +26,9 @@ def _render_posts(
     list_container.clear()
     with list_container:
         if not posts:
-            theme.empty_state_label("No posts match the current search or filters.")
+            primitives.text(
+                "No posts match the current search or filters.", tone="empty"
+            )
             return
         for post in posts:
             components.post_summary_card(post, on_select)
@@ -55,12 +57,13 @@ def build_posts_tab(ctx: AppContext) -> None:
 
         def render_footer(target: Post) -> None:
             if target.status != PostStatus.PUBLISHED:
-                theme.outline_button(
+                primitives.button(
                     "Edit",
                     icon="edit",
+                    variant="outline",
                     on_click=lambda: reader_modal.set_edit_mode(True, target),
                 )
-            theme.close_button(reader_modal.close)
+            primitives.button("Close", variant="flat", on_click=reader_modal.close)
 
         reader_modal.open(post, render_footer=render_footer)
 
@@ -75,7 +78,8 @@ def build_posts_tab(ctx: AppContext) -> None:
         )
         filtered = state.filter_posts(posts)
 
-        page_label.set_text(f"Page {state.page} — {len(filtered)} post(s)")
+        count_label.set_text(f"{len(filtered)} post(s)")
+        page_label.set_text(f"Page {state.page}")
         prev_btn.set_enabled(state.can_go_prev())
         next_btn.set_enabled(state.can_go_next(len(filtered)))
         _render_posts(list_container, filtered, open_post_dialog)
@@ -92,50 +96,49 @@ def build_posts_tab(ctx: AppContext) -> None:
         state.next_page()
         await load_page()
 
-    with templates.narrow_page("h-full flex flex-col min-h-0 gap-2"):
-        with templates.card_panel("gap-2 shrink-0 q-pa-sm"):
-            with theme.row_gap_2("w-full gap-3"):
-                search_input = theme.outlined_input(
-                    "Search posts",
-                    placeholder="Search by keywords or phrases...",
-                    extra_classes="col",
-                )
-                search_btn = theme.primary_button("Search", icon="search")
+    with layout.page_container(), layout.panel_card(size="fill"):
+        with primitives.row(wrap=True, gap="sm", shrink=True):
+            search_input = primitives.text_input(
+                "Search",
+                placeholder="Keywords or #tags...",
+                grow=True,
+            )
+            origin_select = primitives.select_input(
+                [o.value for o in PostOrigin],
+                label="Origin",
+                multiple=True,
+                use_chips=True,
+                width="col",
+            )
+            status_select = primitives.select_input(
+                [s.value for s in PostStatus],
+                label="Status",
+                multiple=True,
+                use_chips=True,
+                width="col",
+            )
+            page_size_input = primitives.number_input(
+                "Rows",
+                value=state.limit,
+                min_val=MIN_PAGE_SIZE,
+                max_val=MAX_PAGE_SIZE,
+                step=1,
+                width="xs",
+            )
 
-            with theme.row_gap_2("w-full gap-3 flex-wrap"):
-                origin_select = theme.outlined_select(
-                    [o.value for o in PostOrigin],
-                    label="Origins",
-                    multiple=True,
-                    use_chips=True,
-                    extra_classes="min-w-48 col",
-                )
-                status_select = theme.outlined_select(
-                    [s.value for s in PostStatus],
-                    label="Statuses",
-                    multiple=True,
-                    use_chips=True,
-                    extra_classes="min-w-48 col",
-                )
-                page_size_input = theme.outlined_number(
-                    "Per page",
-                    value=state.limit,
-                    min=MIN_PAGE_SIZE,
-                    max=MAX_PAGE_SIZE,
-                    step=1,
-                    extra_classes="w-28",
-                )
+        ui.separator()
+        list_container = primitives.column(scroll=True)
+        ui.separator()
 
-        page_label, prev_btn, next_btn = components.pagination_bar(
-            f"Page {state.page}", on_prev, on_next
-        )
+        with primitives.row(justify="between", shrink=True):
+            count_label = primitives.text("0 post(s)", tone="muted")
+            page_label, prev_btn, next_btn = components.pagination_bar(
+                f"Page {state.page}", on_prev, on_next
+            )
 
-        with theme.scroll_box("flex-1", "min-h-0"):
-            list_container = theme.stack()
-
-    search_btn.on_click(on_filter_or_search)
-    search_input.on("keydown.enter", lambda _: on_filter_or_search())
+    search_input.on_value_change(lambda _: on_filter_or_search())
     origin_select.on_value_change(lambda _: on_filter_or_search())
     status_select.on_value_change(lambda _: on_filter_or_search())
+    page_size_input.on_value_change(lambda _: on_filter_or_search())
 
     ui.timer(_INITIAL_LOAD_DELAY_SEC, load_page, once=True)

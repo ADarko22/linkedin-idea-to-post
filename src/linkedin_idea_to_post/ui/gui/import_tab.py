@@ -5,7 +5,7 @@ from pathlib import Path
 from nicegui import events, ui
 
 from linkedin_idea_to_post.app_context import AppContext
-from linkedin_idea_to_post.ui.gui import components, templates, theme
+from linkedin_idea_to_post.ui.gui import components, layout, primitives
 from linkedin_idea_to_post.ui.gui.helpers import run_blocking
 from linkedin_idea_to_post.ui.gui.import_state import (
     ImportState,
@@ -31,11 +31,12 @@ def _render_errors(
     errors_expansion.set_text(f"Parsing & Mapping Errors ({total})")
     with errors_box:
         for err in res.parsing_errors:
-            theme.error_label(f"Row {err.row} [{err.field}]: {err.message}")
+            primitives.text(f"Row {err.row} [{err.field}]: {err.message}", tone="error")
         for m_err in res.mapping_errors:
             for f_err in m_err.errors:
-                theme.error_label(
-                    f"Row {m_err.raw_post.row} [{f_err.field}]: {f_err.message}"
+                primitives.text(
+                    f"Row {m_err.raw_post.row} [{f_err.field}]: {f_err.message}",
+                    tone="error",
                 )
 
 
@@ -43,40 +44,45 @@ def build_import_tab(ctx: AppContext) -> None:
     state = ImportState()
     checkboxes: list[ui.checkbox] = []
 
-    with templates.narrow_page():
-        status_banner, banner_label = templates.status_banner()
+    with layout.page_container():
+        status_banner, banner_label = layout.status_banner()
 
-        upload_view = templates.card_panel()
+        upload_view = layout.panel_card(size="md")
         with upload_view:
-            theme.section_title("Import LinkedIn Shares CSV")
-            theme.muted_caption(
-                "Upload your LinkedIn Shares.csv export or enter a local file path to preview posts before importing."
+            primitives.heading("Import LinkedIn Shares CSV", level=1)
+            primitives.text(
+                "Upload your LinkedIn Shares.csv export or enter a local file path to preview posts before importing.",
+                tone="muted",
             )
-            path_input = theme.outlined_input(
+            path_input = primitives.text_input(
                 "Path to Shares.csv", placeholder="/path/to/Shares.csv"
             )
-            with theme.row_between("q-mt-xs"):
-                upload_widget = theme.csv_upload()
-                parse_btn = theme.primary_button("Parse & Preview", icon="preview")
+            with primitives.row(justify="between"):
+                upload_widget = primitives.csv_upload()
+                parse_btn = primitives.button(
+                    "Parse & Preview", icon="preview", variant="primary"
+                )
 
-        preview_view = templates.narrow_page()
+        preview_view = layout.panel_card(size="fill")
         preview_view.set_visibility(False)
         with preview_view:
-            with templates.compact_card(), theme.row_between():
-                summary_row = theme.row_gap_2()
-                with theme.row_gap_2():
-                    select_all_btn = theme.flat_button("All")
-                    select_none_btn = theme.flat_button("None")
-                    cancel_btn = theme.outline_button(
-                        "Cancel", icon="close", dense=False
+            with primitives.row(justify="between", wrap=True, shrink=True):
+                summary_row = primitives.row(full_width=False, gap="xs")
+                with primitives.row(full_width=False, gap="xs"):
+                    select_all_btn = primitives.button("All", variant="flat")
+                    select_none_btn = primitives.button("None", variant="flat")
+                    cancel_btn = primitives.button(
+                        "Cancel", icon="close", variant="outline"
                     )
-                    import_btn = theme.positive_button("Import Selected", icon="check")
+                    import_btn = primitives.button(
+                        "Import Selected", icon="check", variant="positive"
+                    )
 
-            errors_expansion, errors_box = templates.warning_expansion(
+            errors_expansion, errors_box = layout.warning_expansion(
                 "Parsing & Mapping Errors"
             )
-            with theme.scroll_box():
-                posts_box = theme.stack()
+            ui.separator()
+            posts_box = primitives.column(scroll=True)
 
     def reset_view(banner_message: str | None = None) -> None:
         state.reset()
@@ -98,17 +104,19 @@ def build_import_tab(ctx: AppContext) -> None:
         checkboxes.clear()
 
         with summary_row:
-            ui.badge(f"Valid: {len(res.posts)}", color="positive")
+            primitives.pill(f"Valid: {len(res.posts)}", tone="published")
             if res.parsing_errors:
-                ui.badge(f"Parse errors: {len(res.parsing_errors)}", color="warning")
+                primitives.pill(
+                    f"Parse errors: {len(res.parsing_errors)}", tone="draft"
+                )
             if res.mapping_errors:
-                ui.badge(f"Map errors: {len(res.mapping_errors)}", color="negative")
+                primitives.pill(f"Map errors: {len(res.mapping_errors)}", tone="draft")
 
         _render_errors(errors_box, errors_expansion, res)
 
         with posts_box:
             if not res.posts:
-                theme.empty_state_label("No valid posts found in this CSV.")
+                primitives.text("No valid posts found in this CSV.", tone="empty")
             for idx, post in enumerate(res.posts):
                 tag_badge = f"{len(post.hashtags)} tag(s)" if post.hashtags else None
 
@@ -120,7 +128,6 @@ def build_import_tab(ctx: AppContext) -> None:
                     selected=idx in state.selected_indices,
                     on_toggle=_on_toggle,
                     badge_text=tag_badge,
-                    badge_color="grey-7",
                 )
                 checkboxes.append(cb)
 
