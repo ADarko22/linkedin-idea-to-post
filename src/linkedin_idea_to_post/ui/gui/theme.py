@@ -282,6 +282,10 @@ def set_icon(btn: ui.button, icon: str) -> None:
     btn.props(f"icon={icon}")
 
 
+def set_badge_color(b: ui.badge, color: str) -> None:
+    b.props(f"color={color}")
+
+
 _TOML_EDITOR_CLASSES = (
     "w-full flex-1 h-[calc(100vh-285px)] min-h-72 font-mono text-caption "
     "[&_.q-field\\_\\_inner]:h-full [&_.q-field\\_\\_control]:h-full "

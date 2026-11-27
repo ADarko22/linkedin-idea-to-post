@@ -120,6 +120,15 @@ def warning_expansion(title: str = "Errors") -> tuple[ui.expansion, ui.column]:
     return expansion, inner
 
 
+def search_results_panel() -> tuple[ui.column, ui.label, ui.column]:
+    panel = ui.column().classes("w-full border rounded bg-grey-1 q-pa-xs gap-1")
+    panel.set_visibility(False)
+    with panel:
+        info = theme.muted_caption("", "text-grey-8 px-1")
+        box = ui.column().classes("w-full max-h-60 overflow-y-auto gap-1.5 pr-1")
+    return panel, info, box
+
+
 def interactive_card(extra_classes: str = "") -> ui.card:
     return ui.card().classes(
         f"w-full shrink-0 q-px-md q-py-sm cursor-pointer hover:bg-grey-1 {extra_classes}".strip()
