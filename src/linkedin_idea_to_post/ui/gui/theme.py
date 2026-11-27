@@ -34,6 +34,20 @@ def row_gap_2(extra_classes: str = "") -> ui.row:
     return ui.row().classes(f"{ROW_GAP_2} {extra_classes}".strip())
 
 
+def footer_row(extra_classes: str = "") -> ui.row:
+    return ui.row().classes(f"w-full justify-end gap-2 {extra_classes}".strip())
+
+
+def stack(gap: str = "gap-2", extra_classes: str = "") -> ui.column:
+    return ui.column().classes(f"w-full {gap} {extra_classes}".strip())
+
+
+def scroll_column(extra_classes: str = "") -> ui.column:
+    return ui.column().classes(
+        f"w-full flex-1 min-h-0 overflow-y-auto overflow-x-hidden gap-2 pr-1 {extra_classes}".strip()
+    )
+
+
 def section_title(
     text: str, *, small: bool = False, extra_classes: str = ""
 ) -> ui.label:
@@ -69,6 +83,10 @@ def post_body_label(text: str, extra_classes: str = "") -> ui.label:
 
 def empty_state_label(text: str) -> ui.label:
     return ui.label(text).classes("text-grey text-center w-full py-8")
+
+
+def error_label(text: str) -> ui.label:
+    return ui.label(text).classes(ERROR_CAPTION)
 
 
 def scroll_box(
@@ -162,3 +180,99 @@ def outlined_textarea(
         .props(" ".join(p for p in props if p))
         .classes(extra_classes)
     )
+
+
+def outlined_select(
+    options: list[str] | dict[str, str],
+    *,
+    label: str = "",
+    value: Any = None,
+    multiple: bool = False,
+    use_chips: bool = False,
+    extra_classes: str = "",
+) -> ui.select:
+    props = [PROPS_OUTLINED_DENSE]
+    if use_chips:
+        props.append("use-chips")
+    sel = ui.select(
+        options=options, value=value, multiple=multiple, label=label or None
+    )
+    sel.props(" ".join(props))
+    if extra_classes:
+        sel.classes(extra_classes)
+    return sel
+
+
+def outlined_number(
+    label: str,
+    *,
+    value: float | int,
+    min: float | int | None = None,
+    max: float | int | None = None,
+    step: float | int | None = None,
+    extra_classes: str = "w-32",
+) -> ui.number:
+    return (
+        ui.number(label, value=value, min=min, max=max, step=step)
+        .props(PROPS_OUTLINED_DENSE)
+        .classes(extra_classes)
+    )
+
+
+def icon_button(
+    icon: str,
+    *,
+    on_click: Callable[..., Any] | None = None,
+    color: str = "grey-8",
+    size: str = "sm",
+    tooltip: str | None = None,
+    extra_classes: str = "",
+) -> ui.button:
+    btn = flat_button(
+        icon=icon,
+        on_click=on_click,
+        extra_props=f"round size={size} color={color}",
+    )
+    if tooltip:
+        btn.tooltip(tooltip)
+    if extra_classes:
+        btn.classes(extra_classes)
+    return btn
+
+
+def action_button(
+    label: str,
+    *,
+    icon: str | None = None,
+    color: str | None = None,
+    on_click: Callable[..., Any] | None = None,
+    unelevated: bool = False,
+    outline: bool = False,
+    dense: bool = True,
+    size: str | None = None,
+) -> ui.button:
+    props: list[str] = []
+    if dense:
+        props.append("dense")
+    if outline:
+        props.append("outline")
+    if unelevated:
+        props.append("unelevated")
+    if size:
+        props.append(f"size={size}")
+    btn = ui.button(label, icon=icon, color=color, on_click=on_click)
+    if props:
+        btn.props(" ".join(props))
+    return btn
+
+
+def badge(
+    text: str = "",
+    *,
+    color: str = "grey-7",
+    clickable: bool = False,
+) -> ui.badge:
+    b = ui.badge(text, color=color)
+    if clickable:
+        b.classes("cursor-pointer")
+    return b
